@@ -13,7 +13,8 @@ impl MessageProvider {
         Ok(MessageProvider { tera: tera })
     }
     pub fn greetings_message(&self, user_name: &str) -> anyhow::Result<String> {
-        let ctx = tera::Context::new();
+        let mut ctx = tera::Context::new();
+        ctx.insert("user_name", user_name);
         let message = self
             .tera
             .render("greetings", &ctx)
