@@ -12,7 +12,7 @@ impl MessageProvider {
             .context("error while adding template 'greetings'")?;
         Ok(MessageProvider { tera: tera })
     }
-    pub fn greetings_message(&self) -> anyhow::Result<String> {
+    pub fn greetings_message(&self, user_name: &str) -> anyhow::Result<String> {
         let ctx = tera::Context::new();
         let message = self
             .tera

@@ -5,7 +5,7 @@ use crate::{database::Database, messages::MessageProvider, states::UserState};
 use teloxide::{
     Bot,
     adaptors::DefaultParseMode,
-    dispatching::dialogue::InMemStorage,
+    dispatching::dialogue::{GetChatId, InMemStorage},
     prelude::{Dialogue, Requester},
     types::Message,
 };
@@ -18,7 +18,13 @@ pub async fn start(
     database: Arc<Database>,
     message_provider: Arc<MessageProvider>,
 ) -> anyhow::Result<()> {
-    bot.send_message(msg.chat.id, message_provider.greetings_message()?)
+    if let Some(user) = msg.from() {
+        database.create_user(user.id.0 as i32).await?;
+        bot.send_message(
+            msg.chat.id,
+            message_provider.greetings_message(&user.first_name)?,
+        )
         .await?;
+    }
     Ok(())
 }
