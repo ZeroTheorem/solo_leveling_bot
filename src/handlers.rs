@@ -5,7 +5,7 @@ use crate::{database::Database, messages::MessageProvider, states::UserState};
 use teloxide::{
     Bot,
     adaptors::DefaultParseMode,
-    dispatching::dialogue::{GetChatId, InMemStorage},
+    dispatching::dialogue::InMemStorage,
     prelude::{Dialogue, Requester},
     types::Message,
 };
