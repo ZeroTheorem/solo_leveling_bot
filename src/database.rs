@@ -28,4 +28,15 @@ impl Database {
         .context("error while create user")?;
         Ok(())
     }
+
+    pub async fn create_training(&self, owner_id: i32) -> anyhow::Result<i32> {
+        let training_id = sqlx::query!(
+            "INSERT INTO training (owner_id) VALUES ($1) RETURNING id",
+            owner_id
+        )
+        .fetch_one(&self.pg_pool)
+        .await
+        .context("error while create training")?;
+        Ok(training_id.id)
+    }
 }

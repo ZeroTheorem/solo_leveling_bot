@@ -9,8 +9,10 @@ use teloxide::{filter_command, prelude::*};
 mod commands;
 mod database;
 mod handlers;
+mod keyboards;
 mod messages;
 mod states;
+use states::UserState;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -36,25 +38,34 @@ async fn main() -> anyhow::Result<()> {
         .branch(dptree::case![BotCommands::Start])
         .endpoint(handlers::start);
 
-    let message_handler = Update::filter_message().branch(command_handler);
+    let message_handler = Update::filter_message()
+        .enter_dialogue::<Message, InMemStorage<states::UserState>, states::UserState>()
+        .branch(command_handler)
+        .branch(dptree::case![UserState::NoState].endpoint(handlers::any_text))
+        .branch(
+            dptree::case![UserState::ReceiveTrainingName { training_id }]
+                .endpoint(handlers::receive_traning_name),
+        )
+        .branch(
+            dptree::case![UserState::DoReps {
+                training_id,
+                training_name
+            }]
+            .endpoint(handlers::do_reps),
+        );
 
     // create Bot
     let bot = Bot::from_env().parse_mode(ParseMode::Html);
 
-    Dispatcher::builder(
-        bot,
-        dptree::entry()
-            .enter_dialogue::<Update, InMemStorage<states::UserState>, states::UserState>()
-            .branch(message_handler),
-    )
-    .dependencies(dptree::deps![
-        Arc::new(db),
-        Arc::new(message_provider),
-        InMemStorage::<states::UserState>::new()
-    ])
-    .enable_ctrlc_handler()
-    .build()
-    .dispatch()
-    .await;
+    Dispatcher::builder(bot, dptree::entry().branch(message_handler))
+        .dependencies(dptree::deps![
+            Arc::new(db),
+            Arc::new(message_provider),
+            InMemStorage::<states::UserState>::new()
+        ])
+        .enable_ctrlc_handler()
+        .build()
+        .dispatch()
+        .await;
     Ok(())
 }
