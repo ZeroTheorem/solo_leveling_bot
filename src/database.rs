@@ -39,4 +39,24 @@ impl Database {
         .context("error while create training")?;
         Ok(training_id.id)
     }
+
+    pub async fn create_exercise(
+        &self,
+        name: String,
+        weight: i32,
+        reps: i32,
+        training_id: i32,
+    ) -> anyhow::Result<i32> {
+        let exercise_id = sqlx::query!(
+            "INSERT INTO exercises (name, weight, reps, training_id) VALUES ($1, $2, $3, $4) RETURNING id;",
+            name,
+            weight,
+            reps,
+            training_id
+        )
+        .fetch_one(&self.pg_pool)
+        .await
+        .context("error while create exercise")?;
+        Ok(exercise_id.id)
+    }
 }

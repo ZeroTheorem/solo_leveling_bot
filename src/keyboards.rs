@@ -6,10 +6,10 @@ pub fn create_main_menu() -> KeyboardMarkup {
 }
 
 pub fn create_training_menu() -> KeyboardMarkup {
-    KeyboardMarkup::new(vec![vec![
-        KeyboardButton::new("Сменить упражнение 🔄"),
-        KeyboardButton::new("Завершить тренировку 🏁"),
-    ]])
+    KeyboardMarkup::new(vec![
+        vec![KeyboardButton::new("Сменить упражнение 🔄")],
+        vec![KeyboardButton::new("Завершить тренировку 🏁")],
+    ])
     .resize_keyboard(true)
 }
 

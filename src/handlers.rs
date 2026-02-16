@@ -108,26 +108,16 @@ pub async fn do_reps(
                 .await?;
             }
             _ => {
-                let user_input: Vec<&str> = text.split(" ").collect();
-                if user_input.len() != 2 {
-                    bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
-                        .await?;
-                    return Ok(());
-                }
-                let mut parsed_user_input: Vec<i32> = vec![];
-                for v in user_input {
-                    let try_parse = v.parse::<i32>();
-                    match try_parse {
-                        Ok(parsed_value) => {
-                            parsed_user_input.push(parsed_value);
-                        }
-                        Err(_) => {
-                            bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
-                                .await?;
-                            return Ok(());
-                        }
+                let user_input: Result<Vec<i32>, _> =
+                    text.split_whitespace().map(str::parse).collect();
+                let parsed_user_input = match user_input {
+                    Ok(v) if v.len() == 2 => v,
+                    _ => {
+                        bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
+                            .await?;
+                        return Ok(());
                     }
-                }
+                };
             }
         }
     }
