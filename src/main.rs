@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
         .branch(
             dptree::case![UserState::DoReps {
                 training_id,
-                training_name
+                exercise_name
             }]
             .endpoint(handlers::do_reps),
         );

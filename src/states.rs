@@ -7,6 +7,6 @@ pub enum UserState {
     },
     DoReps {
         training_id: i32,
-        training_name: String,
+        exercise_name: String,
     },
 }

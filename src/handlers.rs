@@ -25,7 +25,7 @@ pub async fn start(
             msg.chat.id,
             message_provider.greetings_message(&user.first_name)?,
         )
-        .reply_markup(keyboards::create_keyboard())
+        .reply_markup(keyboards::create_main_menu())
         .await?;
     }
     Ok(())
@@ -46,8 +46,12 @@ pub async fn any_text(
                     dialogue
                         .update(UserState::ReceiveTrainingName { training_id })
                         .await?;
-                    bot.send_message(msg.chat.id, "Введи назнавание первого упражнения")
-                        .await?;
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.start_training_message(&user.first_name)?,
+                    )
+                    .reply_markup(keyboards::off_menu())
+                    .await?;
                 }
             }
             _ => (),
@@ -61,28 +65,50 @@ pub async fn receive_traning_name(
     msg: Message,
     training_id: i32,
     dialogue: MyDialogue,
+    message_provider: Arc<MessageProvider>,
 ) -> anyhow::Result<()> {
     if let Some(text) = msg.text() {
         dialogue
             .update(UserState::DoReps {
                 training_id: training_id,
-                training_name: text.to_string(),
+                exercise_name: text.to_string(),
             })
             .await?;
-        bot.send_message(msg.chat.id, format!("погнали {text}"))
-            .await?;
+        bot.send_message(
+            msg.chat.id,
+            message_provider.exercise_selected_message(text)?,
+        )
+        .reply_markup(keyboards::create_training_menu())
+        .await?;
     }
     Ok(())
 }
 
 pub async fn do_reps(
     bot: DefaultParseMode<Bot>,
-    (training_id, training_name): (i32, String),
+    dialogue: MyDialogue,
+    (training_id, exercise_name): (i32, String),
+    message_provider: Arc<MessageProvider>,
     msg: Message,
 ) -> anyhow::Result<()> {
-    if let Some(_) = msg.text() {
-        bot.send_message(msg.chat.id, format!("{training_id}--{training_name}"))
-            .await?;
+    if let Some(text) = msg.text() {
+        match text {
+            "Сменить упражнение 🔄" => {
+                dialogue
+                    .update(UserState::ReceiveTrainingName {
+                        training_id: training_id,
+                    })
+                    .await?;
+
+                bot.send_message(
+                    msg.chat.id,
+                    message_provider.change_exercise_message(&exercise_name)?,
+                )
+                .reply_markup(keyboards::off_menu())
+                .await?;
+            }
+            _ => {}
+        }
     }
     Ok(())
 }
