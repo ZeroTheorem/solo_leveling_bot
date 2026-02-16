@@ -107,7 +107,28 @@ pub async fn do_reps(
                 .reply_markup(keyboards::off_menu())
                 .await?;
             }
-            _ => {}
+            _ => {
+                let user_input: Vec<&str> = text.split(" ").collect();
+                if user_input.len() != 2 {
+                    bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
+                        .await?;
+                    return Ok(());
+                }
+                let mut parsed_user_input: Vec<i32> = vec![];
+                for v in user_input {
+                    let try_parse = v.parse::<i32>();
+                    match try_parse {
+                        Ok(parsed_value) => {
+                            parsed_user_input.push(parsed_value);
+                        }
+                        Err(_) => {
+                            bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
+                                .await?;
+                            return Ok(());
+                        }
+                    }
+                }
+            }
         }
     }
     Ok(())

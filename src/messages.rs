@@ -26,6 +26,8 @@ impl MessageProvider {
         )
         .context("error while adding template 'change_exercise'")?;
 
+        tera.add_raw_template("wrong_format", include_str!("./texts/wrong_format.tera"))
+            .context("error while adding template 'wrong_format'")?;
         Ok(MessageProvider { tera: tera })
     }
     pub fn greetings_message(&self, user_name: &str) -> anyhow::Result<String> {
@@ -65,6 +67,15 @@ impl MessageProvider {
             .tera
             .render("change_exercise", &ctx)
             .context("error while render template 'change_exercise'")?;
+        Ok(message)
+    }
+
+    pub fn wrong_format_message(&self) -> anyhow::Result<String> {
+        let ctx = tera::Context::new();
+        let message = self
+            .tera
+            .render("wrong_format", &ctx)
+            .context("error while render template 'wrong_format'")?;
         Ok(message)
     }
 }
