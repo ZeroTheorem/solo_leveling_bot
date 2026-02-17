@@ -1,0 +1,4 @@
+[2m2026-02-16T15:25:22.540965Z[0m [31mERROR[0m [2mteloxide::error_handlers[0m[2m:[0m Error: A Telegram's error: Bad Request: message text is empty
+
+Caused by:
+    Bad Request: message text is empty

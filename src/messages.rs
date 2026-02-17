@@ -1,5 +1,7 @@
+use crate::database::Exercises;
 use ::tera::Tera;
 use anyhow::Context;
+use std::fmt::Write;
 
 pub struct MessageProvider {
     tera: Tera,
@@ -28,6 +30,10 @@ impl MessageProvider {
 
         tera.add_raw_template("wrong_format", include_str!("./texts/wrong_format.tera"))
             .context("error while adding template 'wrong_format'")?;
+
+        tera.add_raw_template("get_journal", include_str!("./texts/get_journal.tera"))
+            .context("error while adding template 'get_journal'")?;
+
         Ok(MessageProvider { tera: tera })
     }
     pub fn greetings_message(&self, user_name: &str) -> anyhow::Result<String> {
@@ -77,5 +83,37 @@ impl MessageProvider {
             .render("wrong_format", &ctx)
             .context("error while render template 'wrong_format'")?;
         Ok(message)
+    }
+    pub fn get_journal_message(&self, user_name: &str) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("user_name", user_name);
+        let message = self
+            .tera
+            .render("get_journal", &ctx)
+            .context("error while render template 'get_journal'")?;
+        Ok(message)
+    }
+    pub fn full_training_message(&self, exercises: Vec<Exercises>) -> anyhow::Result<String> {
+        if exercises.is_empty() {
+            return Ok("Нет данных по тренировке 💤".to_string());
+        }
+
+        let mut answer = String::new();
+        let mut temp_name = &exercises[0].name;
+
+        write!(answer, "<b>{}</b>\n\n", temp_name)?;
+
+        for exercise in &exercises {
+            if &exercise.name != temp_name {
+                temp_name = &exercise.name;
+                write!(answer, "\n<b>{}</b>\n\n", temp_name)?;
+            }
+            write!(
+                answer,
+                "{} kg -- {} reps. | 989xp\n",
+                exercise.weight, exercise.reps
+            )?;
+        }
+        Ok(answer)
     }
 }
