@@ -8,7 +8,7 @@ use crate::database::Trainings;
 pub fn create_main_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![vec![
         KeyboardButton::new("Начать тренировку 🚀"),
-        KeyboardButton::new("Последние тренировки 🚀"),
+        KeyboardButton::new("Последние тренировки 📔"),
     ]])
     .resize_keyboard(true)
 }
@@ -28,7 +28,7 @@ pub fn dynamic(data: Vec<Trainings>) -> anyhow::Result<InlineKeyboardMarkup> {
         buttons.push(vec![InlineKeyboardButton::callback(
             button
                 .created_at
-                .ok_or(anyhow::anyhow!("field not found "))?
+                .unwrap_or(Local::now().naive_local())
                 .format("%d.%m.%Y")
                 .to_string(),
             button.id.to_string(),

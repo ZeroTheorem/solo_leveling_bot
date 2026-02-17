@@ -103,48 +103,54 @@ pub async fn do_reps(
     msg: Message,
 ) -> anyhow::Result<()> {
     if let Some(text) = msg.text() {
-        match text {
-            "Сменить упражнение 🔄" => {
-                dialogue
-                    .update(UserState::ReceiveTrainingName {
-                        training_id: training_id,
-                    })
-                    .await?;
+        if let Some(user) = msg.from() {
+            match text {
+                "Сменить упражнение 🔄" => {
+                    dialogue
+                        .update(UserState::ReceiveTrainingName {
+                            training_id: training_id,
+                        })
+                        .await?;
 
-                bot.send_message(
-                    msg.chat.id,
-                    message_provider.change_exercise_message(&exercise_name)?,
-                )
-                .reply_markup(keyboards::off_menu())
-                .await?;
-            }
-            "Завершить тренировку 🏁" => {
-                dialogue.update(UserState::NoState).await?;
-                bot.send_message(msg.chat.id, "Тренировка завершена!")
-                    .reply_markup(keyboards::create_main_menu())
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.change_exercise_message(&exercise_name)?,
+                    )
+                    .reply_markup(keyboards::off_menu())
                     .await?;
-            }
-            _ => {
-                let user_input: Result<Vec<i32>, _> =
-                    text.split_whitespace().map(str::parse).collect();
-                match user_input {
-                    Ok(parsed_input) if parsed_input.len() == 2 => {
-                        database
-                            .create_exercise(
-                                &exercise_name,
-                                parsed_input[0],
-                                parsed_input[1],
-                                training_id,
-                            )
-                            .await?;
-                        bot.send_message(msg.chat.id, "OK").await?;
-                    }
-                    _ => {
-                        bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
-                            .await?;
-                        return Ok(());
-                    }
-                };
+                }
+                "Завершить тренировку 🏁" => {
+                    dialogue.update(UserState::NoState).await?;
+                    let (current_exp, current_lvl) =
+                        database.get_current_progress(user.id.0 as i32).await?;
+                    let exp_for_training =
+                        database.get_exercises_from_training(training_id).await?;
+                    bot.send_message(msg.chat.id, "Тренировка завершена!")
+                        .reply_markup(keyboards::create_main_menu())
+                        .await?;
+                }
+                _ => {
+                    let user_input: Result<Vec<i32>, _> =
+                        text.split_whitespace().map(str::parse).collect();
+                    match user_input {
+                        Ok(parsed_input) if parsed_input.len() == 2 => {
+                            database
+                                .create_exercise(
+                                    &exercise_name,
+                                    parsed_input[0],
+                                    parsed_input[1],
+                                    training_id,
+                                )
+                                .await?;
+                            bot.send_message(msg.chat.id, "OK").await?;
+                        }
+                        _ => {
+                            bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)
+                                .await?;
+                            return Ok(());
+                        }
+                    };
+                }
             }
         }
     }
