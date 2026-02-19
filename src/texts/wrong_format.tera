@@ -1,7 +1,14 @@
-⚠️ <b>Неверный формат ввода</b>.
+⚠️ <b>INPUT ERROR — Invalid Command Format</b>
 
-Введите данные так:
+Hunter, the system could not process your entry. ❌
+
+Please enter the data in the correct format:
 
 <code>80 8</code>
 
-Где 80 — вес (кг), а 8 — повторения 💪
+Where:
+80 — weight (kg) 🏋️‍♂️
+8 — repetitions 🔁
+
+Accurate input ensures proper <b>EXP</b> calculation.
+Stay focused. Precision is part of the grind. 💢

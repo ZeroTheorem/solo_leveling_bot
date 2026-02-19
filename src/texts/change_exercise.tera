@@ -1,2 +1,8 @@
-🔄 Меняем упражнение — {{exercise_name}}.
-✍️ Введи новое название упражнения, и продолжим тренировку 🏋️
+🔄 <b>Exercise Change Initiated — {{exercise_name}}</b>
+
+Hunter, you are switching targets. ⚔️
+
+✍️ Enter the name of the new exercise to continue your training session. 🏋️‍♂️🔥
+
+Adapt. Advance. Accumulate <b>EXP</b>.
+The path to your next <b>Level</b> continues.

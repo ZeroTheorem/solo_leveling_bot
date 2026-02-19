@@ -1,0 +1,8 @@
+<b>🛡️ Hunter Profile — {{user_name}}</b>
+
+<b>Level:</b> {{current_lvl}} ⬆️
+
+<b>EXP:</b> {{current_user_exp}} / {{exp_to_the_next_lvl}} ✨
+<code>{{progress_bar}}</code> — {{percent | round(precision=1)}}% to next Level ⚔️🔥
+
+Every workout fills the bar and brings you closer to <b>Level Up</b>. Keep going, Hunter! 💪🔥

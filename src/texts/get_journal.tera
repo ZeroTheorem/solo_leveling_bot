@@ -1,2 +1,10 @@
-📚 Вот твои последние тренировки, {{user_name}}!
-Выбирай нужную ниже и посмотрим детали 💪"
+<b>📚 Training Archive — {{user_name}}</b>
+
+Your recent training sessions have been retrieved from the system. 🗂️⚔️
+
+Select one of the sessions below to view its details and review the progress you’ve earned. 💪✨
+
+Every past workout is a record of accumulated <b>EXP</b>.
+Every entry brings you closer to your next <b>Level</b>. ⬆️🔥
+
+Choose your raid log and continue the ascent.

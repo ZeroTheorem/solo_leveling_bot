@@ -13,8 +13,17 @@ impl MessageProvider {
         tera.add_raw_template("greetings", include_str!("./texts/greetings.tera"))
             .context("error while adding template 'greetings'")?;
 
-        tera.add_raw_template("start_trainig", include_str!("./texts/start_training.tera"))
-            .context("error while adding template 'start_trainig'")?;
+        tera.add_raw_template(
+            "start_training",
+            include_str!("./texts/start_training.tera"),
+        )
+        .context("error while adding template 'start_training'")?;
+
+        tera.add_raw_template(
+            "reps_completed",
+            include_str!("./texts/reps_completed.tera"),
+        )
+        .context("error while adding template 'reps_completed'")?;
 
         tera.add_raw_template(
             "exercise_selected",
@@ -34,6 +43,9 @@ impl MessageProvider {
         tera.add_raw_template("get_journal", include_str!("./texts/get_journal.tera"))
             .context("error while adding template 'get_journal'")?;
 
+        tera.add_raw_template("user_progress", include_str!("./texts/user_progress.tera"))
+            .context("error while adding template 'user_progress'")?;
+
         Ok(MessageProvider { tera: tera })
     }
     pub fn greetings_message(&self, user_name: &str) -> anyhow::Result<String> {
@@ -51,8 +63,8 @@ impl MessageProvider {
         ctx.insert("user_name", user_name);
         let message = self
             .tera
-            .render("start_trainig", &ctx)
-            .context("error while render template 'start_trainig'")?;
+            .render("start_training", &ctx)
+            .context("error while render template 'start_training'")?;
         Ok(message)
     }
 
@@ -91,6 +103,46 @@ impl MessageProvider {
             .tera
             .render("get_journal", &ctx)
             .context("error while render template 'get_journal'")?;
+        Ok(message)
+    }
+
+    pub fn reps_completed_message(
+        &self,
+        weight: i32,
+        reps: i32,
+        exp_gained: i32,
+    ) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("weight", &weight);
+        ctx.insert("reps", &reps);
+        ctx.insert("exp_gained", &exp_gained);
+        let message = self
+            .tera
+            .render("reps_completed", &ctx)
+            .context("error while render template 'get_journal'")?;
+        Ok(message)
+    }
+
+    pub fn get_user_progress(
+        &self,
+        user_name: &str,
+        current_lvl: i32,
+        current_user_exp: i32,
+        exp_to_the_next_lvl: i32,
+        progress_bar: String,
+        percent: f64,
+    ) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("user_name", user_name);
+        ctx.insert("current_lvl", &current_lvl);
+        ctx.insert("current_user_exp", &current_user_exp);
+        ctx.insert("exp_to_the_next_lvl", &exp_to_the_next_lvl);
+        ctx.insert("progress_bar", &progress_bar);
+        ctx.insert("percent", &percent);
+        let message = self
+            .tera
+            .render("user_progress", &ctx)
+            .context("error while render template 'user_progress'")?;
         Ok(message)
     }
     pub fn full_training_message(&self, exercises: Vec<Exercises>) -> anyhow::Result<String> {

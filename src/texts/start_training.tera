@@ -1,2 +1,10 @@
-🧠 {{user_name}}, тренировка создана.
-✍️ Введи название первого упражнения — давай соберём её по шагам.
+<b>🧠 SYSTEM NOTICE — Training Initialized</b>
+
+{{user_name}}, your workout has been successfully created. ⚔️🏋️‍♂️
+
+The dungeon awaits its first challenge.
+
+✍️ Enter the name of your <b>first exercise</b> —
+let’s build this session step by step and begin earning <b>EXP</b>. 🔥
+
+Your path to the next <b>Level</b> starts with a single action.

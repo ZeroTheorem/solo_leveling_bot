@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use crate::{database::Database, keyboards, messages::MessageProvider, states::UserState};
+use crate::{
+    database::Database, experience, keyboards, messages::MessageProvider, states::UserState,
+};
 
 use teloxide::{
     Bot,
@@ -41,7 +43,7 @@ pub async fn any_text(
     if let Some(text) = msg.text() {
         if let Some(user) = msg.from() {
             match text {
-                "Начать тренировку 🚀" => {
+                "Start training 🚀" => {
                     let training_id = database.create_training(user.id.0 as i32).await?;
                     dialogue
                         .update(UserState::ReceiveTrainingName { training_id })
@@ -50,10 +52,10 @@ pub async fn any_text(
                         msg.chat.id,
                         message_provider.start_training_message(&user.first_name)?,
                     )
-                    .reply_markup(keyboards::off_menu())
+                    .reply_markup(keyboards::choose_exercise_menu())
                     .await?;
                 }
-                "Последние тренировки 📔" => {
+                "Last trainings 📔" => {
                     let last_five_training =
                         database.get_last_five_training(user.id.0 as i32).await?;
                     bot.send_message(
@@ -105,7 +107,7 @@ pub async fn do_reps(
     if let Some(text) = msg.text() {
         if let Some(user) = msg.from() {
             match text {
-                "Сменить упражнение 🔄" => {
+                "Switch exercise 🔄" => {
                     dialogue
                         .update(UserState::ReceiveTrainingName {
                             training_id: training_id,
@@ -116,18 +118,50 @@ pub async fn do_reps(
                         msg.chat.id,
                         message_provider.change_exercise_message(&exercise_name)?,
                     )
-                    .reply_markup(keyboards::off_menu())
+                    .reply_markup(keyboards::choose_exercise_menu())
                     .await?;
                 }
-                "Завершить тренировку 🏁" => {
+                "Compleat training 🏁" => {
                     dialogue.update(UserState::NoState).await?;
+
                     let (current_exp, current_lvl) =
                         database.get_current_progress(user.id.0 as i32).await?;
-                    let exp_for_training =
-                        database.get_exercises_from_training(training_id).await?;
-                    bot.send_message(msg.chat.id, "Тренировка завершена!")
-                        .reply_markup(keyboards::create_main_menu())
-                        .await?;
+
+                    let exp_for_training = database.get_total_exp_fro_training(training_id).await?;
+
+                    let (new_user_lvl, new_user_exp) = experience::update_user_progress(
+                        current_lvl,
+                        current_exp,
+                        exp_for_training as i32,
+                    );
+
+                    let exercises = database.get_exercises_from_training(training_id).await?;
+
+                    let exp_to_the_next_lvl =
+                        experience::calculate_exp_to_the_next_lvl(new_user_lvl);
+
+                    let percent =
+                        experience::get_percent(new_user_exp as f64, exp_to_the_next_lvl as f64);
+
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.full_training_message(exercises)?,
+                    )
+                    .await?;
+
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.get_user_progress(
+                            &user.first_name,
+                            new_user_lvl,
+                            new_user_exp,
+                            exp_to_the_next_lvl,
+                            experience::generate_progress_bar(percent),
+                            percent,
+                        )?,
+                    )
+                    .reply_markup(keyboards::create_main_menu())
+                    .await?;
                 }
                 _ => {
                     let user_input: Result<Vec<i32>, _> =
@@ -142,7 +176,15 @@ pub async fn do_reps(
                                     training_id,
                                 )
                                 .await?;
-                            bot.send_message(msg.chat.id, "OK").await?;
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.reps_completed_message(
+                                    parsed_input[0],
+                                    parsed_input[1],
+                                    parsed_input[0] * parsed_input[1],
+                                )?,
+                            )
+                            .await?;
                         }
                         _ => {
                             bot.send_message(msg.chat.id, message_provider.wrong_format_message()?)

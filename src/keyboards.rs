@@ -6,21 +6,46 @@ use teloxide::types::{
 use crate::database::Trainings;
 
 pub fn create_main_menu() -> KeyboardMarkup {
-    KeyboardMarkup::new(vec![vec![
-        KeyboardButton::new("Начать тренировку 🚀"),
-        KeyboardButton::new("Последние тренировки 📔"),
-    ]])
+    KeyboardMarkup::new(vec![
+        vec![KeyboardButton::new("Start training 🚀")],
+        vec![KeyboardButton::new("Last trainings 📔")],
+    ])
     .resize_keyboard(true)
 }
 
 pub fn create_training_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
-        vec![KeyboardButton::new("Сменить упражнение 🔄")],
-        vec![KeyboardButton::new("Завершить тренировку 🏁")],
+        vec![KeyboardButton::new("Switch exercise 🔄")],
+        vec![KeyboardButton::new("Compleat training 🏁")],
     ])
     .resize_keyboard(true)
 }
 
+pub fn choose_exercise_menu() -> KeyboardMarkup {
+    KeyboardMarkup::new(vec![
+        vec![
+            KeyboardButton::new("Bench press"),
+            KeyboardButton::new("Lat pull-down"),
+        ],
+        vec![
+            KeyboardButton::new("Incline bench press"),
+            KeyboardButton::new("Lat pull-down hummer"),
+        ],
+        vec![
+            KeyboardButton::new("EZ biceps curls"),
+            KeyboardButton::new("Triceps push down"),
+        ],
+        vec![
+            KeyboardButton::new("Biceps curls"),
+            KeyboardButton::new("Single triceps push down"),
+        ],
+        vec![
+            KeyboardButton::new("Biceps curls hummer"),
+            KeyboardButton::new("Horizontal row hummer"),
+        ],
+    ])
+    .resize_keyboard(true)
+}
 pub fn dynamic(data: Vec<Trainings>) -> anyhow::Result<InlineKeyboardMarkup> {
     let mut buttons = vec![];
 

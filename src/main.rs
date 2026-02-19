@@ -8,6 +8,7 @@ use teloxide::types::ParseMode;
 use teloxide::{filter_command, prelude::*};
 mod commands;
 mod database;
+mod experience;
 mod handlers;
 mod keyboards;
 mod messages;
