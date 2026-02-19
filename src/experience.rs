@@ -10,6 +10,10 @@ pub fn update_user_progress(current_lvl: i32, current_exp: i32, gained_exp: i32)
     (new_user_lvl, new_user_exp)
 }
 
+pub fn downgrade_user_progress() {
+    todo!()
+}
+
 pub fn calculate_exp_to_the_next_lvl(current_lvl: i32) -> i32 {
     (current_lvl + 1) * (current_lvl + 1) * 10
 }

@@ -1,7 +1,5 @@
 use chrono::Local;
-use teloxide::types::{
-    InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardMarkup, KeyboardRemove,
-};
+use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardMarkup};
 
 use crate::database::Trainings;
 
@@ -66,8 +64,4 @@ pub fn dynamic(data: Vec<Trainings>) -> anyhow::Result<InlineKeyboardMarkup> {
         )])
     }
     Ok(InlineKeyboardMarkup::new(buttons))
-}
-
-pub fn off_menu() -> KeyboardRemove {
-    KeyboardRemove::new()
 }
