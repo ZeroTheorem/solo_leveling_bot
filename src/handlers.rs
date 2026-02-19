@@ -55,6 +55,28 @@ pub async fn any_text(
                     .reply_markup(keyboards::choose_exercise_menu())
                     .await?;
                 }
+                "My progress 📈" => {
+                    let (user_lvl, user_exp) =
+                        database.get_current_progress(user.id.0 as i32).await?;
+
+                    let exp_to_the_next_lvl = experience::calculate_exp_to_the_next_lvl(user_lvl);
+
+                    let percent =
+                        experience::get_percent(user_exp as f64, exp_to_the_next_lvl as f64);
+
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.get_user_progress(
+                            &user.first_name,
+                            user_lvl,
+                            user_exp,
+                            exp_to_the_next_lvl,
+                            experience::generate_progress_bar(percent),
+                            percent,
+                        )?,
+                    )
+                    .await?;
+                }
                 "Last trainings 📔" => {
                     let last_five_training =
                         database.get_last_five_training(user.id.0 as i32).await?;
@@ -124,16 +146,20 @@ pub async fn do_reps(
                 "Compleat training 🏁" => {
                     dialogue.update(UserState::NoState).await?;
 
-                    let (current_exp, current_lvl) =
+                    let (current_lvl, current_exp) =
                         database.get_current_progress(user.id.0 as i32).await?;
 
-                    let exp_for_training = database.get_total_exp_fro_training(training_id).await?;
+                    let gained_exp = database.get_total_exp_fro_training(training_id).await?;
 
                     let (new_user_lvl, new_user_exp) = experience::update_user_progress(
                         current_lvl,
                         current_exp,
-                        exp_for_training as i32,
+                        gained_exp as i32,
                     );
+
+                    database
+                        .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i32)
+                        .await?;
 
                     let exercises = database.get_exercises_from_training(training_id).await?;
 
@@ -161,6 +187,14 @@ pub async fn do_reps(
                         )?,
                     )
                     .reply_markup(keyboards::create_main_menu())
+                    .await?;
+                }
+                "Delete last exercise ❌" => {
+                    let (weight, reps) = database.delete_last_exercise(training_id).await?;
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.delete_last_rep_message(weight * reps)?,
+                    )
                     .await?;
                 }
                 _ => {
@@ -205,15 +239,15 @@ pub async fn call_back(
     message_provider: Arc<MessageProvider>,
     database: Arc<Database>,
 ) -> anyhow::Result<()> {
+    bot.answer_callback_query(q.id).await?;
     let training_id: i32 = q
         .data
         .ok_or(anyhow::anyhow!("call_back не отсутствует"))?
         .parse()?;
     let exercises = database.get_exercises_from_training(training_id).await?;
     if let Some(message) = q.message {
-        bot.edit_message_text(
+        bot.send_message(
             message.chat.id,
-            message.id,
             message_provider.full_training_message(exercises)?,
         )
         .await?;

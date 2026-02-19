@@ -20,6 +20,12 @@ impl MessageProvider {
         .context("error while adding template 'start_training'")?;
 
         tera.add_raw_template(
+            "delete_last_exercise",
+            include_str!("./texts/delete_last_exercise.tera"),
+        )
+        .context("error while adding template 'delete_last_rep'")?;
+
+        tera.add_raw_template(
             "reps_completed",
             include_str!("./texts/reps_completed.tera"),
         )
@@ -122,6 +128,15 @@ impl MessageProvider {
             .context("error while render template 'get_journal'")?;
         Ok(message)
     }
+    pub fn delete_last_rep_message(&self, exp_lost: i32) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("exp_lost", &exp_lost);
+        let message = self
+            .tera
+            .render("delete_last_exercise", &ctx)
+            .context("error while render template 'delete_last_exercise'")?;
+        Ok(message)
+    }
 
     pub fn get_user_progress(
         &self,
@@ -147,25 +162,34 @@ impl MessageProvider {
     }
     pub fn full_training_message(&self, exercises: Vec<Exercises>) -> anyhow::Result<String> {
         if exercises.is_empty() {
-            return Ok("Нет данных по тренировке 💤".to_string());
+            return Ok("💤 <b>No training data found</b>".to_string());
         }
 
         let mut answer = String::new();
         let mut temp_name = &exercises[0].name;
+        let mut total: i64 = 0;
 
-        write!(answer, "<b>{}</b>\n\n", temp_name)?;
+        write!(answer, "\n🏹 <b>{}</b>\n\n", temp_name)?;
 
         for exercise in &exercises {
+            let total_per_rep = exercise.weight * exercise.reps;
+
             if &exercise.name != temp_name {
                 temp_name = &exercise.name;
-                write!(answer, "\n<b>{}</b>\n\n", temp_name)?;
+                write!(answer, "\n🏹 <b>{}</b>\n\n", temp_name)?;
             }
             write!(
                 answer,
-                "{} kg -- {} reps. | 989xp\n",
-                exercise.weight, exercise.reps
+                "⚔️ <code>{} kg × {} reps</code> — <b>{} EXP</b>\n",
+                exercise.weight, exercise.reps, total_per_rep
             )?;
+            total += total_per_rep
         }
+        write!(
+            answer,
+            "\n✨ <b>Total EXP Earned: {} EXP</b> — Keep leveling up! 🚀",
+            total
+        )?;
         Ok(answer)
     }
 }

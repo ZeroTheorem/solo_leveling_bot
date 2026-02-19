@@ -111,12 +111,41 @@ impl Database {
 
     pub async fn get_current_progress(&self, user_id: i32) -> anyhow::Result<(i32, i32)> {
         let current_progress = sqlx::query!(
-            "SELECT exp, lvl FROM users WHERE telegram_id = $1;",
+            "SELECT lvl, exp FROM users WHERE telegram_id = $1;",
             user_id
         )
         .fetch_one(&self.pg_pool)
         .await
         .context("error while get current progress")?;
-        Ok((current_progress.exp, current_progress.lvl))
+        Ok((current_progress.lvl, current_progress.exp))
+    }
+
+    pub async fn update_user_progress(
+        &self,
+        lvl: i32,
+        exp: i32,
+        user_id: i32,
+    ) -> anyhow::Result<()> {
+        sqlx::query!(
+            "UPDATE users SET lvl = $1, exp = $2 WHERE telegram_id = $3",
+            lvl,
+            exp,
+            user_id
+        )
+        .execute(&self.pg_pool)
+        .await
+        .context("error while update user progress")?;
+        Ok(())
+    }
+
+    pub async fn delete_last_exercise(&self, training_id: i32) -> anyhow::Result<(i32, i32)> {
+        let last_exercise = sqlx::query!(
+            "DELETE FROM exercises WHERE id = (SELECT MAX(id) FROM exercises WHERE training_id = $1) RETURNING weight, reps",
+            training_id
+        )
+        .fetch_one(&self.pg_pool)
+        .await
+        .context("error while delete last rep")?;
+        Ok((last_exercise.weight, last_exercise.reps))
     }
 }

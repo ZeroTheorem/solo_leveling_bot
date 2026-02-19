@@ -7,15 +7,21 @@ use crate::database::Trainings;
 
 pub fn create_main_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
-        vec![KeyboardButton::new("Start training 🚀")],
-        vec![KeyboardButton::new("Last trainings 📔")],
+        vec![
+            KeyboardButton::new("Start training 🚀"),
+            KeyboardButton::new("Last trainings 📔"),
+        ],
+        vec![KeyboardButton::new("My progress 📈")],
     ])
     .resize_keyboard(true)
 }
 
 pub fn create_training_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
-        vec![KeyboardButton::new("Switch exercise 🔄")],
+        vec![
+            KeyboardButton::new("Switch exercise 🔄"),
+            KeyboardButton::new("Delete last exercise ❌"),
+        ],
         vec![KeyboardButton::new("Compleat training 🏁")],
     ])
     .resize_keyboard(true)

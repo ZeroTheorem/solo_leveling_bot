@@ -1,11 +1,7 @@
-pub fn update_user_progress(
-    current_lvl: i32,
-    current_exp: i32,
-    exp_for_training: i32,
-) -> (i32, i32) {
+pub fn update_user_progress(current_lvl: i32, current_exp: i32, gained_exp: i32) -> (i32, i32) {
     let mut exp_for_next_lvl = calculate_exp_to_the_next_lvl(current_lvl);
     let mut new_user_lvl = current_lvl;
-    let mut new_user_exp = current_exp + exp_for_training;
+    let mut new_user_exp = current_exp + gained_exp;
     while new_user_exp >= exp_for_next_lvl {
         new_user_lvl += 1;
         new_user_exp = new_user_exp - exp_for_next_lvl;
