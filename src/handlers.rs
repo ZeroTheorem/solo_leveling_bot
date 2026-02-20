@@ -333,7 +333,6 @@ pub async fn deleting_training(
                     {
                         Some(id) => id,
                         None => {
-                            dialogue.update(UserState::NoState).await?;
                             bot.send_message(msg.chat.id, message_provider.not_found_training())
                                 .reply_markup(keyboards::create_main_menu())
                                 .await?;
@@ -348,8 +347,10 @@ pub async fn deleting_training(
                         Some(total_exp_earned_for_the_training) => {
                             total_exp_earned_for_the_training
                         }
+
                         None => {
-                            dialogue.update(UserState::NoState).await?;
+                            database.delete_last_training(user.id.0 as i32).await?;
+
                             bot.send_message(
                                 msg.chat.id,
                                 message_provider.delete_empty_training_message(),
