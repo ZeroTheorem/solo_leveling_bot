@@ -107,6 +107,21 @@ impl MessageProvider {
     pub fn cancel_completing_message(&self) -> &str {
         include_str!("texts/cancel_completing.txt")
     }
+    pub fn delete_empty_training_message(&self) -> &str {
+        include_str!("texts/delete_empty_training.txt")
+    }
+    pub fn complete_empty_training(&self) -> &str {
+        include_str!("texts/complete_empty_training.txt")
+    }
+    pub fn empty_training_message(&self) -> &str {
+        include_str!("texts/empty_training.txt")
+    }
+    pub fn no_history_found_message(&self) -> &str {
+        include_str!("texts/no_found_history.txt")
+    }
+    pub fn no_set_to_delete_message(&self) -> &str {
+        include_str!("texts/no_set_to_delete.txt")
+    }
     pub fn get_journal_message(&self, user_name: &str) -> anyhow::Result<String> {
         let mut ctx = tera::Context::new();
         ctx.insert("user_name", user_name);

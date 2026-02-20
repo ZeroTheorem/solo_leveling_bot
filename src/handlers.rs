@@ -7,7 +7,7 @@ use crate::{
 use teloxide::{
     Bot,
     adaptors::DefaultParseMode,
-    dispatching::dialogue::{self, InMemStorage},
+    dispatching::dialogue::InMemStorage,
     payloads::SendMessageSetters,
     prelude::{Dialogue, Requester},
     types::{CallbackQuery, Message},
@@ -91,8 +91,11 @@ pub async fn any_text(
                             .await?;
                         }
                         None => {
-                            // Send message and return
-                            todo!()
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.no_history_found_message(),
+                            )
+                            .await?;
                         }
                     };
                 }
@@ -182,7 +185,8 @@ pub async fn do_reps(
                         .await?;
                     }
                     None => {
-                        todo!()
+                        bot.send_message(msg.chat.id, message_provider.no_set_to_delete_message())
+                            .await?;
                     }
                 }
             }
@@ -235,10 +239,21 @@ pub async fn completing_training(
                 "Yes ✅" => {
                     dialogue.update(UserState::NoState).await?;
 
+                    let gained_exp = match database.get_total_exp_for_training(training_id).await? {
+                        Some(gained_exp) => gained_exp,
+                        None => {
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.complete_empty_training(),
+                            )
+                            .reply_markup(keyboards::create_main_menu())
+                            .await?;
+                            return Ok(());
+                        }
+                    };
+
                     let (current_lvl, current_exp) =
                         database.get_current_progress(user.id.0 as i32).await?;
-
-                    let gained_exp = database.get_total_exp_fro_training(training_id).await?;
 
                     let (new_user_lvl, new_user_exp) = experience::update_user_progress(
                         current_lvl,
@@ -250,41 +265,37 @@ pub async fn completing_training(
                         .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i32)
                         .await?;
 
-                    let exercises = database.get_exercises_from_training(training_id).await?;
-
-                    match exercises {
-                        Some(exercises) => {
-                            let exp_to_the_next_lvl =
-                                experience::calculate_exp_to_the_next_lvl(new_user_lvl);
-
-                            let percent = experience::get_percent(
-                                new_user_exp as f64,
-                                exp_to_the_next_lvl as f64,
-                            );
-                            bot.send_message(
-                                msg.chat.id,
-                                message_provider.full_training_message(exercises)?,
-                            )
-                            .await?;
-
-                            bot.send_message(
-                                msg.chat.id,
-                                message_provider.get_user_progress(
-                                    &user.first_name,
-                                    new_user_lvl,
-                                    new_user_exp,
-                                    exp_to_the_next_lvl,
-                                    experience::generate_progress_bar(percent),
-                                    percent,
-                                )?,
-                            )
-                            .reply_markup(keyboards::create_main_menu())
-                            .await?;
-                        }
+                    let exercises = match database.get_exercises_from_training(training_id).await? {
+                        Some(exercises) => exercises,
                         None => {
-                            todo!()
+                            return Ok(());
                         }
-                    }
+                    };
+
+                    let exp_to_the_next_lvl =
+                        experience::calculate_exp_to_the_next_lvl(new_user_lvl);
+
+                    let percent =
+                        experience::get_percent(new_user_exp as f64, exp_to_the_next_lvl as f64);
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.full_training_message(exercises)?,
+                    )
+                    .await?;
+
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.get_user_progress(
+                            &user.first_name,
+                            new_user_lvl,
+                            new_user_exp,
+                            exp_to_the_next_lvl,
+                            experience::generate_progress_bar(percent),
+                            percent,
+                        )?,
+                    )
+                    .reply_markup(keyboards::create_main_menu())
+                    .await?;
                 }
                 "No 🚫" => {
                     dialogue
@@ -330,9 +341,24 @@ pub async fn deleting_training(
                         }
                     };
 
-                    let total_exp_earned_for_the_last_training = database
-                        .get_total_exp_fro_training(last_user_training_id)
-                        .await?;
+                    let total_exp_earned_for_the_last_training = match database
+                        .get_total_exp_for_training(last_user_training_id)
+                        .await?
+                    {
+                        Some(total_exp_earned_for_the_training) => {
+                            total_exp_earned_for_the_training
+                        }
+                        None => {
+                            dialogue.update(UserState::NoState).await?;
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.delete_empty_training_message(),
+                            )
+                            .reply_markup(keyboards::create_main_menu())
+                            .await?;
+                            return Ok(());
+                        }
+                    };
 
                     database.delete_last_training(user.id.0 as i32).await?;
 
@@ -392,24 +418,25 @@ pub async fn call_back(
     database: Arc<Database>,
 ) -> anyhow::Result<()> {
     bot.answer_callback_query(q.id).await?;
-    let training_id: i32 = q
-        .data
-        .ok_or(anyhow::anyhow!("call_back не отсутствует"))?
-        .parse()?;
-    let exercises = database.get_exercises_from_training(training_id).await?;
-    match exercises {
-        Some(exercises) => {
-            if let Some(message) = q.message {
-                bot.send_message(
-                    message.chat.id,
-                    message_provider.full_training_message(exercises)?,
-                )
-                .await?;
+
+    if let Some(message) = q.message {
+        let training_id: i32 = q
+            .data
+            .ok_or(anyhow::anyhow!("call_back не отсутствует"))?
+            .parse()?;
+        let exercises = match database.get_exercises_from_training(training_id).await? {
+            Some(exercises) => exercises,
+            None => {
+                bot.send_message(message.chat.id, message_provider.empty_training_message())
+                    .await?;
+                return Ok(());
             }
-        }
-        None => {
-            todo!()
-        }
+        };
+        bot.send_message(
+            message.chat.id,
+            message_provider.full_training_message(exercises)?,
+        )
+        .await?;
     }
 
     Ok(())

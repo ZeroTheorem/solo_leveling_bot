@@ -117,7 +117,10 @@ impl Database {
         Ok(Some(exercises))
     }
 
-    pub async fn get_total_exp_fro_training(&self, training_id: i32) -> anyhow::Result<i64> {
+    pub async fn get_total_exp_for_training(
+        &self,
+        training_id: i32,
+    ) -> anyhow::Result<Option<i64>> {
         let total_exp = sqlx::query!(
             "SELECT SUM(weight*reps) as total_exp FROM exercises WHERE training_id = $1;",
             training_id
@@ -125,7 +128,7 @@ impl Database {
         .fetch_one(&self.pg_pool)
         .await
         .context("error while get exp for training")?;
-        Ok(total_exp.total_exp.unwrap_or(0))
+        Ok(total_exp.total_exp)
     }
 
     pub async fn get_current_progress(&self, user_id: i32) -> anyhow::Result<(i32, i32)> {
