@@ -81,7 +81,10 @@ impl Database {
         .context("error delete training")?;
         Ok(())
     }
-    pub async fn get_last_five_training(&self, owner_id: i32) -> anyhow::Result<Vec<Trainings>> {
+    pub async fn get_last_five_training(
+        &self,
+        owner_id: i32,
+    ) -> anyhow::Result<Option<Vec<Trainings>>> {
         let last_five_training = sqlx::query_as!(
             Trainings,
             "SELECT id, created_at FROM training WHERE owner_id = $1 ORDER BY created_at DESC LIMIT 5;",
@@ -90,13 +93,16 @@ impl Database {
         .fetch_all(&self.pg_pool)
         .await
         .context("error while get trainings")?;
-        Ok(last_five_training)
+        if last_five_training.len() == 0 {
+            return Ok(None);
+        }
+        Ok(Some(last_five_training))
     }
 
     pub async fn get_exercises_from_training(
         &self,
         training_id: i32,
-    ) -> anyhow::Result<Vec<Exercises>> {
+    ) -> anyhow::Result<Option<Vec<Exercises>>> {
         let exercises = sqlx::query_as!(
             Exercises,
             "SELECT name, weight, reps FROM exercises WHERE training_id = $1",
@@ -105,7 +111,10 @@ impl Database {
         .fetch_all(&self.pg_pool)
         .await
         .context("error while get exercises")?;
-        Ok(exercises)
+        if exercises.len() == 0 {
+            return Ok(None);
+        }
+        Ok(Some(exercises))
     }
 
     pub async fn get_total_exp_fro_training(&self, training_id: i32) -> anyhow::Result<i64> {
@@ -129,15 +138,18 @@ impl Database {
         .context("error while get current progress")?;
         Ok((current_progress.lvl, current_progress.exp))
     }
-    pub async fn get_last_user_training(&self, user_id: i32) -> anyhow::Result<i32> {
+    pub async fn get_last_user_training(&self, user_id: i32) -> anyhow::Result<Option<i32>> {
         let last_training = sqlx::query!(
             "SELECT id FROM training WHERE id = (SELECT MAX(id) FROM training WHERE owner_id = $1)",
-            user_id
+            user_id,
         )
-        .fetch_one(&self.pg_pool)
+        .fetch_optional(&self.pg_pool)
         .await
         .context("error while get last user training")?;
-        Ok(last_training.id)
+        match last_training {
+            Some(last_training) => Ok(Some(last_training.id)),
+            None => Ok(None),
+        }
     }
 
     pub async fn update_user_progress(
@@ -158,14 +170,20 @@ impl Database {
         Ok(())
     }
 
-    pub async fn delete_last_exercise(&self, training_id: i32) -> anyhow::Result<(i32, i32)> {
+    pub async fn delete_last_exercise(
+        &self,
+        training_id: i32,
+    ) -> anyhow::Result<Option<(i32, i32)>> {
         let last_exercise = sqlx::query!(
             "DELETE FROM exercises WHERE id = (SELECT MAX(id) FROM exercises WHERE training_id = $1) RETURNING weight, reps",
             training_id
         )
-        .fetch_one(&self.pg_pool)
+        .fetch_optional(&self.pg_pool)
         .await
         .context("error while delete last rep")?;
-        Ok((last_exercise.weight, last_exercise.reps))
+        match last_exercise {
+            Some(last_exercise) => Ok(Some((last_exercise.reps, last_exercise.weight))),
+            None => Ok(None),
+        }
     }
 }

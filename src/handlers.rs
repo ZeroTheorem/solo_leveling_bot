@@ -7,7 +7,7 @@ use crate::{
 use teloxide::{
     Bot,
     adaptors::DefaultParseMode,
-    dispatching::dialogue::InMemStorage,
+    dispatching::dialogue::{self, InMemStorage},
     payloads::SendMessageSetters,
     prelude::{Dialogue, Requester},
     types::{CallbackQuery, Message},
@@ -80,12 +80,21 @@ pub async fn any_text(
                 "Last trainings 📔" => {
                     let last_five_training =
                         database.get_last_five_training(user.id.0 as i32).await?;
-                    bot.send_message(
-                        msg.chat.id,
-                        message_provider.get_journal_message(&user.first_name)?,
-                    )
-                    .reply_markup(keyboards::dynamic(last_five_training)?)
-                    .await?;
+
+                    match last_five_training {
+                        Some(last_five_training) => {
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.get_journal_message(&user.first_name)?,
+                            )
+                            .reply_markup(keyboards::dynamic(last_five_training)?)
+                            .await?;
+                        }
+                        None => {
+                            // Send message and return
+                            todo!()
+                        }
+                    };
                 }
                 "Delete last training ❌" => {
                     dialogue.update(UserState::DeletingTraining).await?;
@@ -163,12 +172,19 @@ pub async fn do_reps(
                 .await?;
             }
             "Delete last exercise ❌" => {
-                let (weight, reps) = database.delete_last_exercise(training_id).await?;
-                bot.send_message(
-                    msg.chat.id,
-                    message_provider.delete_last_rep_message(weight * reps)?,
-                )
-                .await?;
+                let last_exercise = database.delete_last_exercise(training_id).await?;
+                match last_exercise {
+                    Some((weight, reps)) => {
+                        bot.send_message(
+                            msg.chat.id,
+                            message_provider.delete_last_rep_message(weight * reps)?,
+                        )
+                        .await?;
+                    }
+                    None => {
+                        todo!()
+                    }
+                }
             }
             _ => {
                 let user_input: Result<Vec<i32>, _> =
@@ -236,31 +252,39 @@ pub async fn completing_training(
 
                     let exercises = database.get_exercises_from_training(training_id).await?;
 
-                    let exp_to_the_next_lvl =
-                        experience::calculate_exp_to_the_next_lvl(new_user_lvl);
+                    match exercises {
+                        Some(exercises) => {
+                            let exp_to_the_next_lvl =
+                                experience::calculate_exp_to_the_next_lvl(new_user_lvl);
 
-                    let percent =
-                        experience::get_percent(new_user_exp as f64, exp_to_the_next_lvl as f64);
+                            let percent = experience::get_percent(
+                                new_user_exp as f64,
+                                exp_to_the_next_lvl as f64,
+                            );
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.full_training_message(exercises)?,
+                            )
+                            .await?;
 
-                    bot.send_message(
-                        msg.chat.id,
-                        message_provider.full_training_message(exercises)?,
-                    )
-                    .await?;
-
-                    bot.send_message(
-                        msg.chat.id,
-                        message_provider.get_user_progress(
-                            &user.first_name,
-                            new_user_lvl,
-                            new_user_exp,
-                            exp_to_the_next_lvl,
-                            experience::generate_progress_bar(percent),
-                            percent,
-                        )?,
-                    )
-                    .reply_markup(keyboards::create_main_menu())
-                    .await?;
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.get_user_progress(
+                                    &user.first_name,
+                                    new_user_lvl,
+                                    new_user_exp,
+                                    exp_to_the_next_lvl,
+                                    experience::generate_progress_bar(percent),
+                                    percent,
+                                )?,
+                            )
+                            .reply_markup(keyboards::create_main_menu())
+                            .await?;
+                        }
+                        None => {
+                            todo!()
+                        }
+                    }
                 }
                 "No 🚫" => {
                     dialogue
@@ -269,7 +293,7 @@ pub async fn completing_training(
                             exercise_name,
                         })
                         .await?;
-                    bot.send_message(msg.chat.id, "Ok let continue")
+                    bot.send_message(msg.chat.id, message_provider.cancel_completing_message())
                         .reply_markup(keyboards::create_training_menu())
                         .await?;
                 }
@@ -291,8 +315,20 @@ pub async fn deleting_training(
         if let Some(user) = msg.from() {
             match text {
                 "Yes ✅" => {
-                    let last_user_training_id =
-                        database.get_last_user_training(user.id.0 as i32).await?;
+                    dialogue.update(UserState::NoState).await?;
+                    let last_user_training_id = match database
+                        .get_last_user_training(user.id.0 as i32)
+                        .await?
+                    {
+                        Some(id) => id,
+                        None => {
+                            dialogue.update(UserState::NoState).await?;
+                            bot.send_message(msg.chat.id, message_provider.not_found_training())
+                                .reply_markup(keyboards::create_main_menu())
+                                .await?;
+                            return Ok(());
+                        }
+                    };
 
                     let total_exp_earned_for_the_last_training = database
                         .get_total_exp_fro_training(last_user_training_id)
@@ -319,6 +355,9 @@ pub async fn deleting_training(
                     let percent =
                         experience::get_percent(new_user_exp as f64, exp_to_the_next_lvl as f64);
 
+                    bot.send_message(msg.chat.id, message_provider.success_delete_message())
+                        .await?;
+
                     bot.send_message(
                         msg.chat.id,
                         message_provider.get_user_progress(
@@ -335,7 +374,7 @@ pub async fn deleting_training(
                 }
                 "No 🚫" => {
                     dialogue.update(UserState::NoState).await?;
-                    bot.send_message(msg.chat.id, "Ok not deleting")
+                    bot.send_message(msg.chat.id, message_provider.cancel_delete_message())
                         .reply_markup(keyboards::create_main_menu())
                         .await?;
                 }
@@ -358,12 +397,19 @@ pub async fn call_back(
         .ok_or(anyhow::anyhow!("call_back не отсутствует"))?
         .parse()?;
     let exercises = database.get_exercises_from_training(training_id).await?;
-    if let Some(message) = q.message {
-        bot.send_message(
-            message.chat.id,
-            message_provider.full_training_message(exercises)?,
-        )
-        .await?;
+    match exercises {
+        Some(exercises) => {
+            if let Some(message) = q.message {
+                bot.send_message(
+                    message.chat.id,
+                    message_provider.full_training_message(exercises)?,
+                )
+                .await?;
+            }
+        }
+        None => {
+            todo!()
+        }
     }
 
     Ok(())

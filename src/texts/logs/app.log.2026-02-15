@@ -1,0 +1,8 @@
+[2m2026-02-20T11:43:54.492331Z[0m [31mERROR[0m [2mteloxide::error_handlers[0m[2m:[0m Error: error while delete last rep
+
+Caused by:
+    no rows returned by a query that expected to return at least one row
+[2m2026-02-20T12:09:19.201593Z[0m [31mERROR[0m [2mteloxide::error_handlers[0m[2m:[0m Error: error while delete last rep
+
+Caused by:
+    no rows returned by a query that expected to return at least one row

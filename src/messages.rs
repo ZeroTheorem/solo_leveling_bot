@@ -94,6 +94,19 @@ impl MessageProvider {
     pub fn wrong_format_message(&self) -> &str {
         include_str!("texts/wrong_format.txt")
     }
+
+    pub fn success_delete_message(&self) -> &str {
+        include_str!("texts/success_delete.txt")
+    }
+    pub fn cancel_delete_message(&self) -> &str {
+        include_str!("texts/cancel_delete.txt")
+    }
+    pub fn not_found_training(&self) -> &str {
+        include_str!("texts/not_found_training.txt")
+    }
+    pub fn cancel_completing_message(&self) -> &str {
+        include_str!("texts/cancel_completing.txt")
+    }
     pub fn get_journal_message(&self, user_name: &str) -> anyhow::Result<String> {
         let mut ctx = tera::Context::new();
         ctx.insert("user_name", user_name);
@@ -161,10 +174,6 @@ impl MessageProvider {
         include_str!("texts/completing_training.txt")
     }
     pub fn full_training_message(&self, exercises: Vec<Exercises>) -> anyhow::Result<String> {
-        if exercises.is_empty() {
-            return Ok("💤 <b>No training data found</b>".to_string());
-        }
-
         let mut answer = String::new();
         let mut temp_name = &exercises[0].name;
         let mut total: i64 = 0;
