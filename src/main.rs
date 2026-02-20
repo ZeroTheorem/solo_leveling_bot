@@ -55,7 +55,15 @@ async fn main() -> anyhow::Result<()> {
                 exercise_name
             }]
             .endpoint(handlers::do_reps),
-        );
+        )
+        .branch(
+            dptree::case![UserState::CompletingTraining {
+                training_id,
+                exercise_name
+            }]
+            .endpoint(handlers::completing_training),
+        )
+        .branch(dptree::case![UserState::DeletingTraining].endpoint(handlers::deleting_training));
 
     // create Bot
     let bot = Bot::from_env().parse_mode(ParseMode::Html);

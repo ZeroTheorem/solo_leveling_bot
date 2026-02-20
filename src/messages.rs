@@ -43,9 +43,6 @@ impl MessageProvider {
         )
         .context("error while adding template 'change_exercise'")?;
 
-        tera.add_raw_template("wrong_format", include_str!("./texts/wrong_format.tera"))
-            .context("error while adding template 'wrong_format'")?;
-
         tera.add_raw_template("get_journal", include_str!("./texts/get_journal.tera"))
             .context("error while adding template 'get_journal'")?;
 
@@ -94,13 +91,8 @@ impl MessageProvider {
         Ok(message)
     }
 
-    pub fn wrong_format_message(&self) -> anyhow::Result<String> {
-        let ctx = tera::Context::new();
-        let message = self
-            .tera
-            .render("wrong_format", &ctx)
-            .context("error while render template 'wrong_format'")?;
-        Ok(message)
+    pub fn wrong_format_message(&self) -> &str {
+        include_str!("texts/wrong_format.txt")
     }
     pub fn get_journal_message(&self, user_name: &str) -> anyhow::Result<String> {
         let mut ctx = tera::Context::new();
@@ -159,6 +151,14 @@ impl MessageProvider {
             .render("user_progress", &ctx)
             .context("error while render template 'user_progress'")?;
         Ok(message)
+    }
+
+    pub fn get_confirm_deleting_message(&self) -> &str {
+        include_str!("texts/confirm_action.txt")
+    }
+
+    pub fn get_confirm_completing_message(&self) -> &str {
+        include_str!("texts/completing_training.txt")
     }
     pub fn full_training_message(&self, exercises: Vec<Exercises>) -> anyhow::Result<String> {
         if exercises.is_empty() {

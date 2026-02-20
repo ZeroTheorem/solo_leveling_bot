@@ -10,8 +10,33 @@ pub fn update_user_progress(current_lvl: i32, current_exp: i32, gained_exp: i32)
     (new_user_lvl, new_user_exp)
 }
 
-pub fn downgrade_user_progress() {
-    todo!()
+pub fn downgrade_user_progress(
+    current_lvl: i32,
+    current_exp: i32,
+    downgrade_exp: i32,
+) -> (i32, i32) {
+    let mut new_user_lvl = current_lvl;
+    let mut new_user_exp = current_exp;
+    let mut temp_downgrade_exp = downgrade_exp;
+
+    while temp_downgrade_exp > 0 {
+        temp_downgrade_exp -= new_user_exp;
+        if temp_downgrade_exp > 0 {
+            if new_user_lvl == 1 {
+                new_user_exp = 0;
+                break;
+            }
+            new_user_lvl -= 1;
+            new_user_exp = calculate_exp_to_the_next_lvl(new_user_lvl);
+        }
+        if temp_downgrade_exp < 0 {
+            new_user_exp = temp_downgrade_exp * -1
+        }
+        if temp_downgrade_exp == 0 {
+            new_user_exp = 0
+        }
+    }
+    (new_user_lvl, new_user_exp)
 }
 
 pub fn calculate_exp_to_the_next_lvl(current_lvl: i32) -> i32 {

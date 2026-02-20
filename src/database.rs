@@ -30,7 +30,7 @@ impl Database {
 
     pub async fn create_user(&self, telegram_id: i32) -> anyhow::Result<()> {
         sqlx::query!(
-            "INSERT INTO users (telegram_id, lvl, exp) VALUES ($1, 0, 0)
+            "INSERT INTO users (telegram_id, lvl, exp) VALUES ($1, 1, 0)
              ON CONFLICT (telegram_id) DO NOTHING;",
             telegram_id
         )
@@ -71,6 +71,16 @@ impl Database {
         Ok(())
     }
 
+    pub async fn delete_last_training(&self, user_id: i32) -> anyhow::Result<()> {
+        sqlx::query!(
+            "DELETE FROM training WHERE id = (SELECT MAX(id) FROM training WHERE owner_id = $1)",
+            user_id
+        )
+        .execute(&self.pg_pool)
+        .await
+        .context("error delete training")?;
+        Ok(())
+    }
     pub async fn get_last_five_training(&self, owner_id: i32) -> anyhow::Result<Vec<Trainings>> {
         let last_five_training = sqlx::query_as!(
             Trainings,
@@ -118,6 +128,16 @@ impl Database {
         .await
         .context("error while get current progress")?;
         Ok((current_progress.lvl, current_progress.exp))
+    }
+    pub async fn get_last_user_training(&self, user_id: i32) -> anyhow::Result<i32> {
+        let last_training = sqlx::query!(
+            "SELECT id FROM training WHERE id = (SELECT MAX(id) FROM training WHERE owner_id = $1)",
+            user_id
+        )
+        .fetch_one(&self.pg_pool)
+        .await
+        .context("error while get last user training")?;
+        Ok(last_training.id)
     }
 
     pub async fn update_user_progress(

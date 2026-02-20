@@ -9,7 +9,10 @@ pub fn create_main_menu() -> KeyboardMarkup {
             KeyboardButton::new("Start training 🚀"),
             KeyboardButton::new("Last trainings 📔"),
         ],
-        vec![KeyboardButton::new("My progress 📈")],
+        vec![
+            KeyboardButton::new("My progress 📈"),
+            KeyboardButton::new("Delete last training ❌"),
+        ],
     ])
     .resize_keyboard(true)
 }
@@ -25,6 +28,13 @@ pub fn create_training_menu() -> KeyboardMarkup {
     .resize_keyboard(true)
 }
 
+pub fn specifying_question_menu() -> KeyboardMarkup {
+    KeyboardMarkup::new(vec![
+        vec![KeyboardButton::new("Yes ✅")],
+        vec![KeyboardButton::new("No 🚫")],
+    ])
+    .resize_keyboard(true)
+}
 pub fn choose_exercise_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
         vec![
