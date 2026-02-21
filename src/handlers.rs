@@ -1,7 +1,15 @@
 use std::sync::Arc;
 
 use crate::{
-    database::Database, experience, keyboards, messages::MessageProvider, states::UserState,
+    database::Database,
+    experience,
+    keyboards::{
+        self, COMPLETE_TRAINING_BTN, DELETE_LAST_EXERCISE_BTN, DELETE_LAST_TRAINING_BTN,
+        LAST_TRAININGS_BTN, MY_PROGRESS_BTN, NO_BTN, START_TRAINING_BTN, SWITCH_EXERCISE_BTN,
+        YES_BTN,
+    },
+    messages::MessageProvider,
+    states::UserState,
 };
 
 use teloxide::{
@@ -22,7 +30,7 @@ pub async fn start(
     message_provider: Arc<MessageProvider>,
 ) -> anyhow::Result<()> {
     if let Some(user) = msg.from() {
-        database.create_user(user.id.0 as i32).await?;
+        database.create_user(user.id.0 as i64).await?;
         bot.send_message(
             msg.chat.id,
             message_provider.greetings_message(&user.first_name)?,
@@ -43,8 +51,8 @@ pub async fn any_text(
     if let Some(text) = msg.text() {
         if let Some(user) = msg.from() {
             match text {
-                "Start training 🚀" => {
-                    let training_id = database.create_training(user.id.0 as i32).await?;
+                START_TRAINING_BTN => {
+                    let training_id = database.create_training(user.id.0 as i64).await?;
                     dialogue
                         .update(UserState::ReceiveTrainingName { training_id })
                         .await?;
@@ -55,9 +63,9 @@ pub async fn any_text(
                     .reply_markup(keyboards::choose_exercise_menu())
                     .await?;
                 }
-                "My progress 📈" => {
+                MY_PROGRESS_BTN => {
                     let (user_lvl, user_exp) =
-                        database.get_current_progress(user.id.0 as i32).await?;
+                        database.get_current_progress(user.id.0 as i64).await?;
 
                     let exp_to_the_next_lvl = experience::calculate_exp_to_the_next_lvl(user_lvl);
 
@@ -77,9 +85,9 @@ pub async fn any_text(
                     )
                     .await?;
                 }
-                "Last trainings 📔" => {
+                LAST_TRAININGS_BTN => {
                     let last_five_training =
-                        database.get_last_five_training(user.id.0 as i32).await?;
+                        database.get_last_five_training(user.id.0 as i64).await?;
 
                     match last_five_training {
                         Some(last_five_training) => {
@@ -99,7 +107,7 @@ pub async fn any_text(
                         }
                     };
                 }
-                "Delete last training ❌" => {
+                DELETE_LAST_TRAINING_BTN => {
                     dialogue.update(UserState::DeletingTraining).await?;
                     bot.send_message(msg.chat.id, message_provider.get_confirm_deleting_message())
                         .reply_markup(keyboards::specifying_question_menu())
@@ -146,7 +154,7 @@ pub async fn do_reps(
 ) -> anyhow::Result<()> {
     if let Some(text) = msg.text() {
         match text {
-            "Switch exercise 🔄" => {
+            SWITCH_EXERCISE_BTN => {
                 dialogue
                     .update(UserState::ReceiveTrainingName {
                         training_id: training_id,
@@ -160,7 +168,7 @@ pub async fn do_reps(
                 .reply_markup(keyboards::choose_exercise_menu())
                 .await?;
             }
-            "Compleat training 🏁" => {
+            COMPLETE_TRAINING_BTN => {
                 dialogue
                     .update(UserState::CompletingTraining {
                         training_id,
@@ -174,7 +182,7 @@ pub async fn do_reps(
                 .reply_markup(keyboards::specifying_question_menu())
                 .await?;
             }
-            "Delete last exercise ❌" => {
+            DELETE_LAST_EXERCISE_BTN => {
                 let last_exercise = database.delete_last_exercise(training_id).await?;
                 match last_exercise {
                     Some((weight, reps)) => {
@@ -236,7 +244,7 @@ pub async fn completing_training(
     if let Some(text) = msg.text() {
         if let Some(user) = msg.from() {
             match text {
-                "Yes ✅" => {
+                YES_BTN => {
                     dialogue.update(UserState::NoState).await?;
 
                     let gained_exp = match database.get_total_exp_for_training(training_id).await? {
@@ -253,7 +261,7 @@ pub async fn completing_training(
                     };
 
                     let (current_lvl, current_exp) =
-                        database.get_current_progress(user.id.0 as i32).await?;
+                        database.get_current_progress(user.id.0 as i64).await?;
 
                     let (new_user_lvl, new_user_exp) = experience::update_user_progress(
                         current_lvl,
@@ -262,7 +270,7 @@ pub async fn completing_training(
                     );
 
                     database
-                        .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i32)
+                        .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i64)
                         .await?;
 
                     let exercises = match database.get_exercises_from_training(training_id).await? {
@@ -297,7 +305,7 @@ pub async fn completing_training(
                     .reply_markup(keyboards::create_main_menu())
                     .await?;
                 }
-                "No 🚫" => {
+                NO_BTN => {
                     dialogue
                         .update(UserState::DoReps {
                             training_id,
@@ -325,10 +333,10 @@ pub async fn deleting_training(
     if let Some(text) = msg.text() {
         if let Some(user) = msg.from() {
             match text {
-                "Yes ✅" => {
+                YES_BTN => {
                     dialogue.update(UserState::NoState).await?;
                     let last_user_training_id = match database
-                        .get_last_user_training(user.id.0 as i32)
+                        .get_last_user_training(user.id.0 as i64)
                         .await?
                     {
                         Some(id) => id,
@@ -349,7 +357,7 @@ pub async fn deleting_training(
                         }
 
                         None => {
-                            database.delete_last_training(user.id.0 as i32).await?;
+                            database.delete_last_training(user.id.0 as i64).await?;
 
                             bot.send_message(
                                 msg.chat.id,
@@ -361,10 +369,10 @@ pub async fn deleting_training(
                         }
                     };
 
-                    database.delete_last_training(user.id.0 as i32).await?;
+                    database.delete_last_training(user.id.0 as i64).await?;
 
                     let (current_lvl, current_exp) =
-                        database.get_current_progress(user.id.0 as i32).await?;
+                        database.get_current_progress(user.id.0 as i64).await?;
 
                     let (new_user_lvl, new_user_exp) = experience::downgrade_user_progress(
                         current_lvl,
@@ -373,7 +381,7 @@ pub async fn deleting_training(
                     );
 
                     database
-                        .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i32)
+                        .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i64)
                         .await?;
 
                     let exp_to_the_next_lvl =
@@ -399,7 +407,7 @@ pub async fn deleting_training(
                     .reply_markup(keyboards::create_main_menu())
                     .await?;
                 }
-                "No 🚫" => {
+                NO_BTN => {
                     dialogue.update(UserState::NoState).await?;
                     bot.send_message(msg.chat.id, message_provider.cancel_delete_message())
                         .reply_markup(keyboards::create_main_menu())

@@ -1,17 +1,27 @@
 use chrono::Local;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardMarkup};
 
-use crate::database::Trainings;
+use crate::database::Training;
+
+pub const START_TRAINING_BTN: &str = "Start training 🚀";
+pub const LAST_TRAININGS_BTN: &str = "Last trainings 📔";
+pub const MY_PROGRESS_BTN: &str = "My progress 📈";
+pub const DELETE_LAST_TRAINING_BTN: &str = "Delete last training ❌";
+pub const SWITCH_EXERCISE_BTN: &str = "Switch exercise 🔄";
+pub const DELETE_LAST_EXERCISE_BTN: &str = "Delete last exercise ❌";
+pub const COMPLETE_TRAINING_BTN: &str = "Complete training 🏁";
+pub const YES_BTN: &str = "Yes ✅";
+pub const NO_BTN: &str = "No 🚫";
 
 pub fn create_main_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
         vec![
-            KeyboardButton::new("Start training 🚀"),
-            KeyboardButton::new("Last trainings 📔"),
+            KeyboardButton::new(START_TRAINING_BTN),
+            KeyboardButton::new(LAST_TRAININGS_BTN),
         ],
         vec![
-            KeyboardButton::new("My progress 📈"),
-            KeyboardButton::new("Delete last training ❌"),
+            KeyboardButton::new(MY_PROGRESS_BTN),
+            KeyboardButton::new(DELETE_LAST_TRAINING_BTN),
         ],
     ])
     .resize_keyboard(true)
@@ -20,18 +30,18 @@ pub fn create_main_menu() -> KeyboardMarkup {
 pub fn create_training_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
         vec![
-            KeyboardButton::new("Switch exercise 🔄"),
-            KeyboardButton::new("Delete last exercise ❌"),
+            KeyboardButton::new(SWITCH_EXERCISE_BTN),
+            KeyboardButton::new(DELETE_LAST_EXERCISE_BTN),
         ],
-        vec![KeyboardButton::new("Compleat training 🏁")],
+        vec![KeyboardButton::new(COMPLETE_TRAINING_BTN)],
     ])
     .resize_keyboard(true)
 }
 
 pub fn specifying_question_menu() -> KeyboardMarkup {
     KeyboardMarkup::new(vec![
-        vec![KeyboardButton::new("Yes ✅")],
-        vec![KeyboardButton::new("No 🚫")],
+        vec![KeyboardButton::new(YES_BTN)],
+        vec![KeyboardButton::new(NO_BTN)],
     ])
     .resize_keyboard(true)
 }
@@ -60,7 +70,7 @@ pub fn choose_exercise_menu() -> KeyboardMarkup {
     ])
     .resize_keyboard(true)
 }
-pub fn dynamic(data: Vec<Trainings>) -> anyhow::Result<InlineKeyboardMarkup> {
+pub fn dynamic(data: Vec<Training>) -> anyhow::Result<InlineKeyboardMarkup> {
     let mut buttons = vec![];
 
     for button in data {

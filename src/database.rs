@@ -7,12 +7,12 @@ pub struct Database {
     pg_pool: PgPool,
 }
 
-pub struct Trainings {
+pub struct Training {
     pub id: i64,
     pub created_at: Option<NaiveDateTime>,
 }
 
-pub struct Exercises {
+pub struct Exercise {
     pub name: String,
     pub weight: i64,
     pub reps: i64,
@@ -28,7 +28,7 @@ impl Database {
         Ok(Database { pg_pool: pg_pool })
     }
 
-    pub async fn create_user(&self, telegram_id: i32) -> anyhow::Result<()> {
+    pub async fn create_user(&self, telegram_id: i64) -> anyhow::Result<()> {
         sqlx::query!(
             "INSERT INTO users (telegram_id, lvl, exp) VALUES ($1, 1, 0)
              ON CONFLICT (telegram_id) DO NOTHING;",
@@ -40,7 +40,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn create_training(&self, owner_id: i32) -> anyhow::Result<i32> {
+    pub async fn create_training(&self, owner_id: i64) -> anyhow::Result<i32> {
         let training_id = sqlx::query!(
             "INSERT INTO training (owner_id) VALUES ($1) RETURNING id",
             owner_id
@@ -71,7 +71,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn delete_last_training(&self, user_id: i32) -> anyhow::Result<()> {
+    pub async fn delete_last_training(&self, user_id: i64) -> anyhow::Result<()> {
         sqlx::query!(
             "DELETE FROM training WHERE id = (SELECT MAX(id) FROM training WHERE owner_id = $1)",
             user_id
@@ -83,10 +83,10 @@ impl Database {
     }
     pub async fn get_last_five_training(
         &self,
-        owner_id: i32,
-    ) -> anyhow::Result<Option<Vec<Trainings>>> {
+        owner_id: i64,
+    ) -> anyhow::Result<Option<Vec<Training>>> {
         let last_five_training = sqlx::query_as!(
-            Trainings,
+            Training,
             "SELECT id, created_at FROM training WHERE owner_id = $1 ORDER BY created_at DESC LIMIT 5;",
             owner_id
         )
@@ -102,9 +102,9 @@ impl Database {
     pub async fn get_exercises_from_training(
         &self,
         training_id: i32,
-    ) -> anyhow::Result<Option<Vec<Exercises>>> {
+    ) -> anyhow::Result<Option<Vec<Exercise>>> {
         let exercises = sqlx::query_as!(
-            Exercises,
+            Exercise,
             "SELECT name, weight, reps FROM exercises WHERE training_id = $1",
             training_id
         )
@@ -131,7 +131,7 @@ impl Database {
         Ok(total_exp.total_exp)
     }
 
-    pub async fn get_current_progress(&self, user_id: i32) -> anyhow::Result<(i32, i32)> {
+    pub async fn get_current_progress(&self, user_id: i64) -> anyhow::Result<(i32, i32)> {
         let current_progress = sqlx::query!(
             "SELECT lvl, exp FROM users WHERE telegram_id = $1;",
             user_id
@@ -141,7 +141,7 @@ impl Database {
         .context("error while get current progress")?;
         Ok((current_progress.lvl, current_progress.exp))
     }
-    pub async fn get_last_user_training(&self, user_id: i32) -> anyhow::Result<Option<i32>> {
+    pub async fn get_last_user_training(&self, user_id: i64) -> anyhow::Result<Option<i32>> {
         let last_training = sqlx::query!(
             "SELECT id FROM training WHERE id = (SELECT MAX(id) FROM training WHERE owner_id = $1)",
             user_id,
@@ -159,7 +159,7 @@ impl Database {
         &self,
         lvl: i32,
         exp: i32,
-        user_id: i32,
+        user_id: i64,
     ) -> anyhow::Result<()> {
         sqlx::query!(
             "UPDATE users SET lvl = $1, exp = $2 WHERE telegram_id = $3",

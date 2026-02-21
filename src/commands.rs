@@ -2,7 +2,7 @@ use teloxide::macros::BotCommands;
 
 #[derive(BotCommands, Clone)]
 #[command(rename_rule = "lowercase")]
-pub enum BotCommands {
+pub enum Commands {
     #[command(description = "Start bot")]
     Start,
 }

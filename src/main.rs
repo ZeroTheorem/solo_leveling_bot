@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use commands::BotCommands;
+use commands::Commands;
 use dotenv::dotenv;
 use teloxide::dispatching::HandlerExt;
 use teloxide::dispatching::dialogue::InMemStorage;
@@ -35,8 +35,8 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     // create handlers
-    let command_handler = filter_command::<BotCommands, _>()
-        .branch(dptree::case![BotCommands::Start])
+    let command_handler = filter_command::<Commands, _>()
+        .branch(dptree::case![Commands::Start])
         .endpoint(handlers::start);
 
     let call_back_query_handler = Update::filter_callback_query().endpoint(handlers::call_back);

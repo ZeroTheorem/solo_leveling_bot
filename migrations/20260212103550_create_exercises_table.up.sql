@@ -7,3 +7,5 @@ CREATE TABLE IF NOT EXISTS exercises (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     training_id INTEGER REFERENCES training(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS training_id_index ON exercises(training_id);

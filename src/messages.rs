@@ -1,4 +1,4 @@
-use crate::database::Exercises;
+use crate::database::Exercise;
 use ::tera::Tera;
 use anyhow::Context;
 use std::fmt::Write;
@@ -188,7 +188,7 @@ impl MessageProvider {
     pub fn get_confirm_completing_message(&self) -> &str {
         include_str!("texts/completing_training.txt")
     }
-    pub fn full_training_message(&self, exercises: Vec<Exercises>) -> anyhow::Result<String> {
+    pub fn full_training_message(&self, exercises: Vec<Exercise>) -> anyhow::Result<String> {
         let mut answer = String::new();
         let mut temp_name = &exercises[0].name;
         let mut total: i64 = 0;
