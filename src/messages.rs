@@ -161,9 +161,9 @@ impl MessageProvider {
     pub fn get_user_progress(
         &self,
         user_name: &str,
-        current_lvl: i32,
-        current_user_exp: i32,
-        exp_to_the_next_lvl: i32,
+        current_lvl: i64,
+        current_user_exp: i64,
+        exp_to_the_next_lvl: i64,
         progress_bar: String,
         percent: f64,
     ) -> anyhow::Result<String> {

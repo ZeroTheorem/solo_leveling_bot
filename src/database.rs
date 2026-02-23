@@ -40,7 +40,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn create_training(&self, owner_id: i64) -> anyhow::Result<i32> {
+    pub async fn create_training(&self, owner_id: i64) -> anyhow::Result<i64> {
         let training_id = sqlx::query!(
             "INSERT INTO training (owner_id) VALUES ($1) RETURNING id",
             owner_id
@@ -56,7 +56,7 @@ impl Database {
         name: &str,
         weight: i32,
         reps: i32,
-        training_id: i32,
+        training_id: i64,
     ) -> anyhow::Result<()> {
         sqlx::query!(
             "INSERT INTO exercises (name, weight, reps, training_id) VALUES ($1, $2, $3, $4);",
@@ -101,7 +101,7 @@ impl Database {
 
     pub async fn get_exercises_from_training(
         &self,
-        training_id: i32,
+        training_id: i64,
     ) -> anyhow::Result<Option<Vec<Exercise>>> {
         let exercises = sqlx::query_as!(
             Exercise,
@@ -119,7 +119,7 @@ impl Database {
 
     pub async fn get_total_exp_for_training(
         &self,
-        training_id: i32,
+        training_id: i64,
     ) -> anyhow::Result<Option<i64>> {
         let total_exp = sqlx::query!(
             "SELECT SUM(weight*reps) as total_exp FROM exercises WHERE training_id = $1;",
@@ -131,7 +131,7 @@ impl Database {
         Ok(total_exp.total_exp)
     }
 
-    pub async fn get_current_progress(&self, user_id: i64) -> anyhow::Result<(i32, i32)> {
+    pub async fn get_current_progress(&self, user_id: i64) -> anyhow::Result<(i64, i64)> {
         let current_progress = sqlx::query!(
             "SELECT lvl, exp FROM users WHERE telegram_id = $1;",
             user_id
@@ -141,7 +141,7 @@ impl Database {
         .context("error while get current progress")?;
         Ok((current_progress.lvl, current_progress.exp))
     }
-    pub async fn get_last_user_training(&self, user_id: i64) -> anyhow::Result<Option<i32>> {
+    pub async fn get_last_user_training(&self, user_id: i64) -> anyhow::Result<Option<i64>> {
         let last_training = sqlx::query!(
             "SELECT id FROM training WHERE id = (SELECT MAX(id) FROM training WHERE owner_id = $1)",
             user_id,
@@ -157,8 +157,8 @@ impl Database {
 
     pub async fn update_user_progress(
         &self,
-        lvl: i32,
-        exp: i32,
+        lvl: i64,
+        exp: i64,
         user_id: i64,
     ) -> anyhow::Result<()> {
         sqlx::query!(
@@ -175,7 +175,7 @@ impl Database {
 
     pub async fn delete_last_exercise(
         &self,
-        training_id: i32,
+        training_id: i64,
     ) -> anyhow::Result<Option<(i32, i32)>> {
         let last_exercise = sqlx::query!(
             "DELETE FROM exercises WHERE id = (SELECT MAX(id) FROM exercises WHERE training_id = $1) RETURNING weight, reps",

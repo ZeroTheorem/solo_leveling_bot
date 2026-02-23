@@ -1,4 +1,4 @@
-pub fn update_user_progress(current_lvl: i32, current_exp: i32, gained_exp: i32) -> (i32, i32) {
+pub fn update_user_progress(current_lvl: i64, current_exp: i64, gained_exp: i64) -> (i64, i64) {
     let mut exp_for_next_lvl = calculate_exp_to_the_next_lvl(current_lvl);
     let mut new_user_lvl = current_lvl;
     let mut new_user_exp = current_exp + gained_exp;
@@ -11,10 +11,10 @@ pub fn update_user_progress(current_lvl: i32, current_exp: i32, gained_exp: i32)
 }
 
 pub fn downgrade_user_progress(
-    current_lvl: i32,
-    current_exp: i32,
-    downgrade_exp: i32,
-) -> (i32, i32) {
+    current_lvl: i64,
+    current_exp: i64,
+    downgrade_exp: i64,
+) -> (i64, i64) {
     let mut new_user_lvl = current_lvl;
     let mut new_user_exp = current_exp;
     let mut temp_downgrade_exp = downgrade_exp;
@@ -39,7 +39,7 @@ pub fn downgrade_user_progress(
     (new_user_lvl, new_user_exp)
 }
 
-pub fn calculate_exp_to_the_next_lvl(current_lvl: i32) -> i32 {
+pub fn calculate_exp_to_the_next_lvl(current_lvl: i64) -> i64 {
     (current_lvl + 1) * (current_lvl + 1) * 10
 }
 

@@ -23,6 +23,10 @@ use teloxide::{
 
 type MyDialogue = Dialogue<UserState, InMemStorage<UserState>>;
 
+const MAX_EXERCISE_NAME_LENGTH: usize = 100;
+const MAX_WEIGHT: i32 = 1000;
+const MAX_REPS: i32 = 100;
+
 pub async fn start(
     bot: DefaultParseMode<Bot>,
     msg: Message,
@@ -123,11 +127,14 @@ pub async fn any_text(
 pub async fn receive_training_name(
     bot: DefaultParseMode<Bot>,
     msg: Message,
-    training_id: i32,
+    training_id: i64,
     dialogue: MyDialogue,
     message_provider: Arc<MessageProvider>,
 ) -> anyhow::Result<()> {
     if let Some(text) = msg.text() {
+        if text.len() > MAX_EXERCISE_NAME_LENGTH {
+            todo!();
+        }
         dialogue
             .update(UserState::DoReps {
                 training_id: training_id,
@@ -147,7 +154,7 @@ pub async fn receive_training_name(
 pub async fn do_reps(
     bot: DefaultParseMode<Bot>,
     dialogue: MyDialogue,
-    (training_id, exercise_name): (i32, String),
+    (training_id, exercise_name): (i64, String),
     message_provider: Arc<MessageProvider>,
     database: Arc<Database>,
     msg: Message,
@@ -211,6 +218,9 @@ pub async fn do_reps(
                                 training_id,
                             )
                             .await?;
+                        if parsed_input[0] > MAX_WEIGHT || parsed_input[1] > MAX_REPS {
+                            todo!();
+                        }
                         bot.send_message(
                             msg.chat.id,
                             message_provider.reps_completed_message(
@@ -236,7 +246,7 @@ pub async fn do_reps(
 pub async fn completing_training(
     bot: DefaultParseMode<Bot>,
     dialogue: MyDialogue,
-    (training_id, exercise_name): (i32, String),
+    (training_id, exercise_name): (i64, String),
     message_provider: Arc<MessageProvider>,
     database: Arc<Database>,
     msg: Message,
@@ -263,11 +273,8 @@ pub async fn completing_training(
                     let (current_lvl, current_exp) =
                         database.get_current_progress(user.id.0 as i64).await?;
 
-                    let (new_user_lvl, new_user_exp) = experience::update_user_progress(
-                        current_lvl,
-                        current_exp,
-                        gained_exp as i32,
-                    );
+                    let (new_user_lvl, new_user_exp) =
+                        experience::update_user_progress(current_lvl, current_exp, gained_exp);
 
                     database
                         .update_user_progress(new_user_lvl, new_user_exp, user.id.0 as i64)
@@ -377,7 +384,7 @@ pub async fn deleting_training(
                     let (new_user_lvl, new_user_exp) = experience::downgrade_user_progress(
                         current_lvl,
                         current_exp,
-                        total_exp_earned_for_the_last_training as i32,
+                        total_exp_earned_for_the_last_training,
                     );
 
                     database
@@ -429,7 +436,7 @@ pub async fn call_back(
     bot.answer_callback_query(q.id).await?;
 
     if let Some(message) = q.message {
-        let training_id: i32 = q
+        let training_id: i64 = q
             .data
             .ok_or(anyhow::anyhow!("call_back не отсутствует"))?
             .parse()?;
