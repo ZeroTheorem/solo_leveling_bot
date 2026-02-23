@@ -1,0 +1,8 @@
+⚠️ <b>Invalid Input — Weight or Reps Too High</b>
+
+Hunter, the value you entered exceeds the allowed limits:
+- Maximum weight: <b>1000 kg</b> 🏋️‍♂️
+- Maximum repetitions: <b>150</b> 🔁
+
+Please enter valid numbers to continue your training.
+Keep your stats within bounds and your <b>EXP</b> flowing! ⚔️🔥

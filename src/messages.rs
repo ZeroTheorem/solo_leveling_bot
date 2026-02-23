@@ -184,7 +184,12 @@ impl MessageProvider {
     pub fn get_confirm_deleting_message(&self) -> &str {
         include_str!("texts/confirm_action.txt")
     }
-
+    pub fn exercise_name_to_long_message(&self) -> &str {
+        include_str!("texts/exercise_name_to_long.txt")
+    }
+    pub fn weight_or_reps_to_high(&self) -> &str {
+        include_str!("texts/weight_or_reps_to_high.txt")
+    }
     pub fn get_confirm_completing_message(&self) -> &str {
         include_str!("texts/completing_training.txt")
     }
@@ -207,7 +212,7 @@ impl MessageProvider {
                 "⚔️ <code>{} kg × {} reps</code> — <b>{} EXP</b>\n",
                 exercise.weight, exercise.reps, total_per_rep
             )?;
-            total += total_per_rep
+            total += total_per_rep as i64
         }
         write!(
             answer,

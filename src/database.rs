@@ -11,11 +11,10 @@ pub struct Training {
     pub id: i64,
     pub created_at: Option<NaiveDateTime>,
 }
-
 pub struct Exercise {
     pub name: String,
-    pub weight: i64,
-    pub reps: i64,
+    pub weight: i32,
+    pub reps: i32,
 }
 
 impl Database {

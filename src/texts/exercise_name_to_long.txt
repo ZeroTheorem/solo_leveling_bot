@@ -1,0 +1,6 @@
+⚠️ <b>Exercise Name Too Long</b>
+
+Hunter, the name you entered exceeds the maximum length of <b>100 characters</b>. 📝
+
+Please shorten it and try again.
+A concise name keeps your training log clear and your <b>EXP</b> flowing. 💪🔥

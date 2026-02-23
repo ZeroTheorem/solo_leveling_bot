@@ -25,7 +25,7 @@ type MyDialogue = Dialogue<UserState, InMemStorage<UserState>>;
 
 const MAX_EXERCISE_NAME_LENGTH: usize = 100;
 const MAX_WEIGHT: i32 = 1000;
-const MAX_REPS: i32 = 100;
+const MAX_REPS: i32 = 150;
 
 pub async fn start(
     bot: DefaultParseMode<Bot>,
@@ -133,7 +133,12 @@ pub async fn receive_training_name(
 ) -> anyhow::Result<()> {
     if let Some(text) = msg.text() {
         if text.len() > MAX_EXERCISE_NAME_LENGTH {
-            todo!();
+            bot.send_message(
+                msg.chat.id,
+                message_provider.exercise_name_to_long_message(),
+            )
+            .await?;
+            return Ok(());
         }
         dialogue
             .update(UserState::DoReps {
@@ -210,6 +215,14 @@ pub async fn do_reps(
                     text.split_whitespace().map(str::parse).collect();
                 match user_input {
                     Ok(parsed_input) if parsed_input.len() == 2 => {
+                        if parsed_input[0] > MAX_WEIGHT || parsed_input[1] > MAX_REPS {
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.weight_or_reps_to_high(),
+                            )
+                            .await?;
+                            return Ok(());
+                        }
                         database
                             .create_exercise(
                                 &exercise_name,
@@ -218,9 +231,6 @@ pub async fn do_reps(
                                 training_id,
                             )
                             .await?;
-                        if parsed_input[0] > MAX_WEIGHT || parsed_input[1] > MAX_REPS {
-                            todo!();
-                        }
                         bot.send_message(
                             msg.chat.id,
                             message_provider.reps_completed_message(
