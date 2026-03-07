@@ -24,6 +24,7 @@ impl Database {
             .connect(&env::var("DATABASE_URL").context("DATABASE_URL was not found")?)
             .await
             .context("error while trying connect to database")?;
+        sqlx::migrate!("./migrations").run(&pg_pool).await?;
         Ok(Database { pg_pool: pg_pool })
     }
 
