@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
 use crate::{
     database::Database,
@@ -10,6 +10,7 @@ use crate::{
     },
     messages::MessageProvider,
     states::UserState,
+    time,
 };
 
 use teloxide::{
@@ -57,9 +58,16 @@ pub async fn any_text(
             match text {
                 START_TRAINING_BTN => {
                     let training_id = database.create_training(user.id.0 as i64).await?;
+
+                    let start_training_time = Instant::now();
+
                     dialogue
-                        .update(UserState::ReceiveTrainingName { training_id })
+                        .update(UserState::ReceiveTrainingName {
+                            training_id,
+                            start_training_time,
+                        })
                         .await?;
+
                     bot.send_message(
                         msg.chat.id,
                         message_provider.start_training_message(&user.first_name)?,
@@ -127,7 +135,7 @@ pub async fn any_text(
 pub async fn receive_training_name(
     bot: DefaultParseMode<Bot>,
     msg: Message,
-    training_id: i64,
+    (training_id, start_training_time): (i64, Instant),
     dialogue: MyDialogue,
     message_provider: Arc<MessageProvider>,
 ) -> anyhow::Result<()> {
@@ -144,6 +152,7 @@ pub async fn receive_training_name(
             .update(UserState::DoReps {
                 training_id: training_id,
                 exercise_name: text.to_string(),
+                start_training_time,
             })
             .await?;
         bot.send_message(
@@ -159,7 +168,7 @@ pub async fn receive_training_name(
 pub async fn do_reps(
     bot: DefaultParseMode<Bot>,
     dialogue: MyDialogue,
-    (training_id, exercise_name): (i64, String),
+    (training_id, exercise_name, start_training_time): (i64, String, Instant),
     message_provider: Arc<MessageProvider>,
     database: Arc<Database>,
     msg: Message,
@@ -170,6 +179,7 @@ pub async fn do_reps(
                 dialogue
                     .update(UserState::ReceiveTrainingName {
                         training_id: training_id,
+                        start_training_time,
                     })
                     .await?;
 
@@ -185,6 +195,7 @@ pub async fn do_reps(
                     .update(UserState::CompletingTraining {
                         training_id,
                         exercise_name,
+                        start_training_time,
                     })
                     .await?;
                 bot.send_message(
@@ -256,7 +267,7 @@ pub async fn do_reps(
 pub async fn completing_training(
     bot: DefaultParseMode<Bot>,
     dialogue: MyDialogue,
-    (training_id, exercise_name): (i64, String),
+    (training_id, exercise_name, start_training_time): (i64, String, Instant),
     message_provider: Arc<MessageProvider>,
     database: Arc<Database>,
     msg: Message,
@@ -310,6 +321,12 @@ pub async fn completing_training(
 
                     bot.send_message(
                         msg.chat.id,
+                        message_provider.elapsed_time_message(time::since(start_training_time))?,
+                    )
+                    .await?;
+
+                    bot.send_message(
+                        msg.chat.id,
                         message_provider.get_user_progress(
                             &user.first_name,
                             new_user_lvl,
@@ -327,6 +344,7 @@ pub async fn completing_training(
                         .update(UserState::DoReps {
                             training_id,
                             exercise_name,
+                            start_training_time,
                         })
                         .await?;
                     bot.send_message(msg.chat.id, message_provider.cancel_completing_message())

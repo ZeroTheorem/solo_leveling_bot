@@ -13,6 +13,7 @@ mod handlers;
 mod keyboards;
 mod messages;
 mod states;
+mod time;
 use states::UserState;
 
 #[tokio::main]
@@ -46,20 +47,25 @@ async fn main() -> anyhow::Result<()> {
         .branch(command_handler)
         .branch(dptree::case![UserState::NoState].endpoint(handlers::any_text))
         .branch(
-            dptree::case![UserState::ReceiveTrainingName { training_id }]
-                .endpoint(handlers::receive_training_name),
+            dptree::case![UserState::ReceiveTrainingName {
+                training_id,
+                start_training_time
+            }]
+            .endpoint(handlers::receive_training_name),
         )
         .branch(
             dptree::case![UserState::DoReps {
                 training_id,
-                exercise_name
+                exercise_name,
+                start_training_time
             }]
             .endpoint(handlers::do_reps),
         )
         .branch(
             dptree::case![UserState::CompletingTraining {
                 training_id,
-                exercise_name
+                exercise_name,
+                start_training_time
             }]
             .endpoint(handlers::completing_training),
         )

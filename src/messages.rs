@@ -35,7 +35,10 @@ impl MessageProvider {
             "exercise_selected",
             include_str!("./texts/exercise_selected.tera"),
         )
-        .context("error while adding template 'exercise_selected'")?;
+        .context("error while adding template 'elapsed_time'")?;
+
+        tera.add_raw_template("elapsed_time", include_str!("./texts/elapsed_time.tera"))
+            .context("error while adding template 'exercise_selected'")?;
 
         tera.add_raw_template(
             "change_exercise",
@@ -71,6 +74,22 @@ impl MessageProvider {
         Ok(message)
     }
 
+    pub fn elapsed_time_message(
+        &self,
+        (hours, minutes, seconds): (u64, u64, u64),
+    ) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("hours", &hours);
+        ctx.insert("minutes", &minutes);
+        ctx.insert("seconds", &seconds);
+
+        let message = self
+            .tera
+            .render("elapsed_time", &ctx)
+            .context("error while render template 'elapsed_time'")?;
+
+        Ok(message)
+    }
     pub fn exercise_selected_message(&self, exercise_name: &str) -> anyhow::Result<String> {
         let mut ctx = tera::Context::new();
         ctx.insert("exercise_name", exercise_name);
