@@ -57,18 +57,46 @@ impl Database {
         weight: i32,
         reps: i32,
         training_id: i64,
+        user_id: i64,
     ) -> anyhow::Result<()> {
         sqlx::query!(
-            "INSERT INTO exercises (name, weight, reps, training_id) VALUES ($1, $2, $3, $4);",
+            "INSERT INTO exercises (name, weight, reps, training_id, owner_id) VALUES ($1, $2, $3, $4, $5);",
             name,
             weight,
             reps,
-            training_id
+            training_id,
+            user_id
         )
         .execute(&self.pg_pool)
         .await
         .context("error while create exercise")?;
         Ok(())
+    }
+
+    pub async fn get_best_set(
+        &self,
+        owner_id: i64,
+        exercise_name: &str,
+    ) -> anyhow::Result<Option<(i32, i32)>> {
+        let best_set = sqlx::query!(
+            "
+        SELECT weight, reps
+        FROM exercises
+        WHERE owner_id = $1
+        AND name = $2
+        ORDER BY weight DESC, reps DESC
+        LIMIT 1
+        ",
+            owner_id,
+            exercise_name
+        )
+        .fetch_optional(&self.pg_pool)
+        .await
+        .context("error while create exercise")?;
+        match best_set {
+            Some(max) => Ok(Some((max.weight, max.reps))),
+            None => Ok(None),
+        }
     }
 
     pub async fn delete_last_training(&self, user_id: i64) -> anyhow::Result<()> {

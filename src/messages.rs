@@ -20,6 +20,12 @@ impl MessageProvider {
         .context("error while adding template 'start_training'")?;
 
         tera.add_raw_template(
+            "best_set_not_found",
+            include_str!("./texts/best_set_not_found.tera"),
+        )
+        .context("error while adding template 'best_set_not_found'")?;
+
+        tera.add_raw_template(
             "delete_last_exercise",
             include_str!("./texts/delete_last_exercise.tera"),
         )
@@ -49,6 +55,9 @@ impl MessageProvider {
         tera.add_raw_template("get_journal", include_str!("./texts/get_journal.tera"))
             .context("error while adding template 'get_journal'")?;
 
+        tera.add_raw_template("best_set", include_str!("./texts/best_set.tera"))
+            .context("error while adding template 'best_set'")?;
+
         tera.add_raw_template("user_progress", include_str!("./texts/user_progress.tera"))
             .context("error while adding template 'user_progress'")?;
 
@@ -74,6 +83,32 @@ impl MessageProvider {
         Ok(message)
     }
 
+    pub fn best_set_message(
+        &self,
+        exercise_name: &str,
+        weight: i32,
+        reps: i32,
+    ) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("weight", &weight);
+        ctx.insert("exercise_name", &exercise_name);
+        ctx.insert("reps", &reps);
+        let message = self
+            .tera
+            .render("best_set", &ctx)
+            .context("error while render template 'best_set'")?;
+        Ok(message)
+    }
+
+    pub fn best_set_not_found(&self, exercise_name: &str) -> anyhow::Result<String> {
+        let mut ctx = tera::Context::new();
+        ctx.insert("exercise_name", &exercise_name);
+        let message = self
+            .tera
+            .render("best_set_not_found", &ctx)
+            .context("error while render template 'best_set_not_found'")?;
+        Ok(message)
+    }
     pub fn elapsed_time_message(
         &self,
         (hours, minutes, seconds): (u64, u64, u64),
@@ -112,6 +147,10 @@ impl MessageProvider {
 
     pub fn wrong_format_message(&self) -> &str {
         include_str!("texts/wrong_format.txt")
+    }
+
+    pub fn awaiting_input_to_fetch_best_set_message(&self) -> &str {
+        include_str!("texts/awaiting_input_to_fetch_best_set.txt")
     }
 
     pub fn success_delete_message(&self) -> &str {

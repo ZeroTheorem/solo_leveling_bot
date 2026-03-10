@@ -1,0 +1,9 @@
+<b>📊⚔️ [Performance Query]</b>
+
+🏋️ <b>Enter the exercise name</b>
+to view your <b>best set</b> 📈
+
+💬 <i>Example:</i>
+<code>Bench Press</code> • <code>Squat</code> • <code>Deadlift</code>
+
+⏳ <i>Awaiting input…</i>

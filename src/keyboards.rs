@@ -10,6 +10,7 @@ pub const DELETE_LAST_TRAINING_BTN: &str = "Delete last training ❌";
 pub const SWITCH_EXERCISE_BTN: &str = "Switch exercise 🔄";
 pub const DELETE_LAST_EXERCISE_BTN: &str = "Delete last exercise ❌";
 pub const COMPLETE_TRAINING_BTN: &str = "Complete training 🏁";
+pub const SHOW_HIGHEST_SET_BTN: &str = "My highest set";
 pub const YES_BTN: &str = "Yes ✅";
 pub const NO_BTN: &str = "No 🚫";
 
@@ -21,8 +22,9 @@ pub fn create_main_menu() -> KeyboardMarkup {
         ],
         vec![
             KeyboardButton::new(MY_PROGRESS_BTN),
-            KeyboardButton::new(DELETE_LAST_TRAINING_BTN),
+            KeyboardButton::new(SHOW_HIGHEST_SET_BTN),
         ],
+        vec![KeyboardButton::new(DELETE_LAST_TRAINING_BTN)],
     ])
     .resize_keyboard(true)
 }

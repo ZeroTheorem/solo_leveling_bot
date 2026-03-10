@@ -18,5 +18,6 @@ pub enum UserState {
         exercise_name: String,
         start_training_time: Instant,
     },
+    ShowMyBestSet,
     DeletingTraining,
 }

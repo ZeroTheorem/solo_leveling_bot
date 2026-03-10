@@ -5,8 +5,8 @@ use crate::{
     experience,
     keyboards::{
         self, COMPLETE_TRAINING_BTN, DELETE_LAST_EXERCISE_BTN, DELETE_LAST_TRAINING_BTN,
-        LAST_TRAININGS_BTN, MY_PROGRESS_BTN, NO_BTN, START_TRAINING_BTN, SWITCH_EXERCISE_BTN,
-        YES_BTN,
+        LAST_TRAININGS_BTN, MY_PROGRESS_BTN, NO_BTN, SHOW_HIGHEST_SET_BTN, START_TRAINING_BTN,
+        SWITCH_EXERCISE_BTN, YES_BTN,
     },
     messages::MessageProvider,
     states::UserState,
@@ -71,6 +71,15 @@ pub async fn any_text(
                     bot.send_message(
                         msg.chat.id,
                         message_provider.start_training_message(&user.first_name)?,
+                    )
+                    .reply_markup(keyboards::choose_exercise_menu())
+                    .await?;
+                }
+                SHOW_HIGHEST_SET_BTN => {
+                    dialogue.update(UserState::ShowMyBestSet).await?;
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.awaiting_input_to_fetch_best_set_message(),
                     )
                     .reply_markup(keyboards::choose_exercise_menu())
                     .await?;
@@ -174,90 +183,96 @@ pub async fn do_reps(
     msg: Message,
 ) -> anyhow::Result<()> {
     if let Some(text) = msg.text() {
-        match text {
-            SWITCH_EXERCISE_BTN => {
-                dialogue
-                    .update(UserState::ReceiveTrainingName {
-                        training_id: training_id,
-                        start_training_time,
-                    })
-                    .await?;
-
-                bot.send_message(
-                    msg.chat.id,
-                    message_provider.change_exercise_message(&exercise_name)?,
-                )
-                .reply_markup(keyboards::choose_exercise_menu())
-                .await?;
-            }
-            COMPLETE_TRAINING_BTN => {
-                dialogue
-                    .update(UserState::CompletingTraining {
-                        training_id,
-                        exercise_name,
-                        start_training_time,
-                    })
-                    .await?;
-                bot.send_message(
-                    msg.chat.id,
-                    message_provider.get_confirm_completing_message(),
-                )
-                .reply_markup(keyboards::specifying_question_menu())
-                .await?;
-            }
-            DELETE_LAST_EXERCISE_BTN => {
-                let last_exercise = database.delete_last_exercise(training_id).await?;
-                match last_exercise {
-                    Some((weight, reps)) => {
-                        bot.send_message(
-                            msg.chat.id,
-                            message_provider.delete_last_rep_message(weight * reps)?,
-                        )
+        if let Some(user) = msg.from() {
+            match text {
+                SWITCH_EXERCISE_BTN => {
+                    dialogue
+                        .update(UserState::ReceiveTrainingName {
+                            training_id: training_id,
+                            start_training_time,
+                        })
                         .await?;
-                    }
-                    None => {
-                        bot.send_message(msg.chat.id, message_provider.no_set_to_delete_message())
-                            .await?;
-                    }
+
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.change_exercise_message(&exercise_name)?,
+                    )
+                    .reply_markup(keyboards::choose_exercise_menu())
+                    .await?;
                 }
-            }
-            _ => {
-                let user_input: Result<Vec<i32>, _> =
-                    text.split_whitespace().map(str::parse).collect();
-                match user_input {
-                    Ok(parsed_input) if parsed_input.len() == 2 => {
-                        if parsed_input[0] > MAX_WEIGHT || parsed_input[1] > MAX_REPS {
+                COMPLETE_TRAINING_BTN => {
+                    dialogue
+                        .update(UserState::CompletingTraining {
+                            training_id,
+                            exercise_name,
+                            start_training_time,
+                        })
+                        .await?;
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.get_confirm_completing_message(),
+                    )
+                    .reply_markup(keyboards::specifying_question_menu())
+                    .await?;
+                }
+                DELETE_LAST_EXERCISE_BTN => {
+                    let last_exercise = database.delete_last_exercise(training_id).await?;
+                    match last_exercise {
+                        Some((weight, reps)) => {
                             bot.send_message(
                                 msg.chat.id,
-                                message_provider.weight_or_reps_to_high(),
+                                message_provider.delete_last_rep_message(weight * reps)?,
                             )
                             .await?;
+                        }
+                        None => {
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.no_set_to_delete_message(),
+                            )
+                            .await?;
+                        }
+                    }
+                }
+                _ => {
+                    let user_input: Result<Vec<i32>, _> =
+                        text.split_whitespace().map(str::parse).collect();
+                    match user_input {
+                        Ok(parsed_input) if parsed_input.len() == 2 => {
+                            if parsed_input[0] > MAX_WEIGHT || parsed_input[1] > MAX_REPS {
+                                bot.send_message(
+                                    msg.chat.id,
+                                    message_provider.weight_or_reps_to_high(),
+                                )
+                                .await?;
+                                return Ok(());
+                            }
+                            database
+                                .create_exercise(
+                                    &exercise_name,
+                                    parsed_input[0],
+                                    parsed_input[1],
+                                    training_id,
+                                    user.id.0 as i64,
+                                )
+                                .await?;
+                            bot.send_message(
+                                msg.chat.id,
+                                message_provider.reps_completed_message(
+                                    parsed_input[0],
+                                    parsed_input[1],
+                                    parsed_input[0] * parsed_input[1],
+                                )?,
+                            )
+                            .await?;
+                        }
+                        _ => {
+                            bot.send_message(msg.chat.id, message_provider.wrong_format_message())
+                                .await?;
                             return Ok(());
                         }
-                        database
-                            .create_exercise(
-                                &exercise_name,
-                                parsed_input[0],
-                                parsed_input[1],
-                                training_id,
-                            )
-                            .await?;
-                        bot.send_message(
-                            msg.chat.id,
-                            message_provider.reps_completed_message(
-                                parsed_input[0],
-                                parsed_input[1],
-                                parsed_input[0] * parsed_input[1],
-                            )?,
-                        )
-                        .await?;
-                    }
-                    _ => {
-                        bot.send_message(msg.chat.id, message_provider.wrong_format_message())
-                            .await?;
-                        return Ok(());
-                    }
-                };
+                    };
+                }
             }
         }
     }
@@ -455,6 +470,38 @@ pub async fn deleting_training(
     Ok(())
 }
 
+pub async fn show_records(
+    bot: DefaultParseMode<Bot>,
+    dialogue: MyDialogue,
+    message_provider: Arc<MessageProvider>,
+    database: Arc<Database>,
+    msg: Message,
+) -> anyhow::Result<()> {
+    if let Some(text) = msg.text() {
+        if let Some(user) = msg.from() {
+            dialogue.update(UserState::NoState).await?;
+
+            let highest_set = database.get_best_set(user.id.0 as i64, text).await?;
+
+            match highest_set {
+                Some((weight, reps)) => {
+                    bot.send_message(
+                        msg.chat.id,
+                        message_provider.best_set_message(text, weight, reps)?,
+                    )
+                    .reply_markup(keyboards::create_main_menu())
+                    .await?;
+                }
+                None => {
+                    bot.send_message(msg.chat.id, message_provider.best_set_not_found(text)?)
+                        .reply_markup(keyboards::create_main_menu())
+                        .await?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
 pub async fn call_back(
     bot: DefaultParseMode<Bot>,
     q: CallbackQuery,
