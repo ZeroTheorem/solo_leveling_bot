@@ -470,7 +470,7 @@ pub async fn deleting_training(
     Ok(())
 }
 
-pub async fn show_records(
+pub async fn show_show_best_set(
     bot: DefaultParseMode<Bot>,
     dialogue: MyDialogue,
     message_provider: Arc<MessageProvider>,
@@ -481,9 +481,9 @@ pub async fn show_records(
         if let Some(user) = msg.from() {
             dialogue.update(UserState::NoState).await?;
 
-            let highest_set = database.get_best_set(user.id.0 as i64, text).await?;
+            let best_set = database.get_best_set(user.id.0 as i64, text).await?;
 
-            match highest_set {
+            match best_set {
                 Some((weight, reps)) => {
                     bot.send_message(
                         msg.chat.id,

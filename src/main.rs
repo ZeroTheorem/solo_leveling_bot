@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
             }]
             .endpoint(handlers::completing_training),
         )
-        .branch(dptree::case![UserState::ShowMyBestSet].endpoint(handlers::show_records))
+        .branch(dptree::case![UserState::ShowMyBestSet].endpoint(handlers::show_show_best_set))
         .branch(dptree::case![UserState::DeletingTraining].endpoint(handlers::deleting_training));
 
     // create Bot
