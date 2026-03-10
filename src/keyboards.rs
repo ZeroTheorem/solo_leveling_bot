@@ -10,7 +10,7 @@ pub const DELETE_LAST_TRAINING_BTN: &str = "Delete last training ❌";
 pub const SWITCH_EXERCISE_BTN: &str = "Switch exercise 🔄";
 pub const DELETE_LAST_EXERCISE_BTN: &str = "Delete last exercise ❌";
 pub const COMPLETE_TRAINING_BTN: &str = "Complete training 🏁";
-pub const SHOW_HIGHEST_SET_BTN: &str = "My highest set";
+pub const SHOW_HIGHEST_SET_BTN: &str = "My best set ⚡️";
 pub const YES_BTN: &str = "Yes ✅";
 pub const NO_BTN: &str = "No 🚫";
 
