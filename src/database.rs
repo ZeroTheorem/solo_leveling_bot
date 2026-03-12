@@ -213,7 +213,7 @@ impl Database {
         .await
         .context("error while delete last rep")?;
         match last_exercise {
-            Some(last_exercise) => Ok(Some((last_exercise.reps, last_exercise.weight))),
+            Some(last_exercise) => Ok(Some((last_exercise.weight, last_exercise.reps))),
             None => Ok(None),
         }
     }

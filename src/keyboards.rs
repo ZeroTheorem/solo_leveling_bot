@@ -69,6 +69,7 @@ pub fn choose_exercise_menu() -> KeyboardMarkup {
             KeyboardButton::new("Biceps curls hummer"),
             KeyboardButton::new("Horizontal row hummer"),
         ],
+        vec![KeyboardButton::new("Leg press")],
     ])
     .resize_keyboard(true)
 }

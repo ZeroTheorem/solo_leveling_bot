@@ -1,5 +1,0 @@
-[2m2026-03-10T09:23:31.819418Z[0m [31mERROR[0m [2mteloxide::error_handlers[0m[2m:[0m Error: error while create training
-
-Caused by:
-    0: error returned from database: insert or update on table "training" violates foreign key constraint "training_owner_id_fkey"
-    1: insert or update on table "training" violates foreign key constraint "training_owner_id_fkey"
